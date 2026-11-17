@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -61,7 +60,6 @@ public class EmissionsDataParserTest
 		assertFalse(m.isReady);
 	}
 
-	@Ignore("obd-akd: non-continuous branch treats 0x100 (supported) as 'incomplete' and ignores 0x001")
 	@Test
 	public void nonContinuousMonitorsFollowJ1979()
 	{
@@ -72,6 +70,16 @@ public class EmissionsDataParserTest
 
 		// not supported, whatever IUMPR says
 		m = parse("EGR", 0x000, 5);
+		assertFalse(m.isAvailable);
+		assertFalse(m.isReady);
+
+		// supported and incomplete stays not ready even with IUMPR completions
+		m = parse("O2SENSOR", 0x101, 7);
+		assertTrue(m.isAvailable);
+		assertFalse(m.isReady);
+
+		// an incomplete bit (byte D) without the supported bit (byte C) is not a monitor
+		m = parse("AIR", 0x001, 0);
 		assertFalse(m.isAvailable);
 		assertFalse(m.isReady);
 	}

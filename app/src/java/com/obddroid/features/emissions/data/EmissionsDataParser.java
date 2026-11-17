@@ -87,8 +87,8 @@ public class EmissionsDataParser {
     /**
      * Parse monitor status from Mode 1 PID 0x01 value
      *
-     * Handles both numeric bit flags and text status strings.
-     * Uses IUMPR data to disambiguate when bit=0 (not supported vs complete).
+     * Handles both numeric bit flags and text status strings. Supported/complete come from
+     * PID 01 alone; IUMPR counts are not used here.
      *
      * @param monitorKey Monitor key
      * @param monitor MonitorData object to update
@@ -110,29 +110,14 @@ public class EmissionsDataParser {
                 boolean incompleteBitSet = (raw & 0x10) != 0;
                 isComplete = isAvailable && !incompleteBitSet;
             } else {
-                // Non-continuous monitors per OBD-II Mode 1 PID 0x01 standard:
-                // Bit=1: Monitor is supported and INCOMPLETE
-                // Bit=0: Monitor is NOT SUPPORTED or COMPLETE (ambiguous!)
-                // Use IUMPR data to disambiguate when bit=0
-                boolean incompleteBitSet = (raw & 0x100) != 0;
-
-                if (incompleteBitSet) {
-                    // Bit set = supported but incomplete
-                    isAvailable = true;
-                    isComplete = false;
-                } else {
-                    // Bit clear = not supported OR complete
-                    // Use IUMPR data to disambiguate: if conditions > 0, monitor is supported
-                    // NOTE: We parse IUMPR BEFORE readiness (in updateAllData), so conditions is populated!
-                    if (monitor.conditions > 0) {
-                        isAvailable = true;
-                        isComplete = true;
-                    } else {
-                        // No IUMPR data + bit clear = not supported by this vehicle
-                        isAvailable = false;
-                        isComplete = false;
-                    }
-                }
+                // Non-continuous monitors (SAE J1979 Mode 01 PID 01, pids.csv TEST_STATUS_8):
+                // the decoded value is ((C << 8 | D) >> n) & 0x101, so
+                //   0x100 = byte C bit n = monitor supported
+                //   0x001 = byte D bit n = monitor not complete
+                // PID 01 is authoritative; IUMPR (Mode 09) counts are informational only.
+                isAvailable = (raw & 0x100) != 0;
+                boolean incompleteBitSet = (raw & 0x001) != 0;
+                isComplete = isAvailable && !incompleteBitSet;
             }
 
             log.info(String.format(Locale.US,

@@ -2,38 +2,29 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
         applicationId 'com.obddroid'
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdk 21
+        targetSdk 36
         versionCode 20616
         versionName 'OBDroid'
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // AutoCheck API – override in local.properties (gitignored)
         buildConfigField "String", "AUTOCHECK_API_BASE_URL", "\"${project.findProperty('AUTOCHECK_API_BASE_URL') ?: ''}\""
         buildConfigField "String", "AUTOCHECK_API_KEY", "\"${project.findProperty('AUTOCHECK_API_KEY') ?: ''}\""
+    }
 
-        lintOptions {
-            // Override lint error on targetSdkVersion
-            abortOnError false
-        }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 
-        compileOptions {
-            sourceCompatibility JavaVersion.VERSION_17
-            targetCompatibility JavaVersion.VERSION_17
-        }
-
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-
-        gradle.projectsEvaluated {
-            tasks.withType(JavaCompile).configureEach {
-                options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
-            }
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile).configureEach {
+            options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
         }
     }
 
@@ -73,13 +64,20 @@ android {
     namespace 'com.obddroid'
 }
 
+// Kotlin 2.x: kotlinOptions {} is gone; the JVM target is set through compilerOptions.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
 dependencies {
     implementation 'com.fazecast:jSerialComm:2.10.4'
     implementation 'com.github.mik3y:usb-serial-for-android:3.9.0'
     implementation 'com.github.anastr:speedviewlib:1.6.1'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'  // Modern charting library
     implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.1'  // 1.7: OnBackInvokedCallback handling for predictive back
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'

@@ -85,6 +85,9 @@ public class EcuComparisonActivity extends AppCompatActivity {
         changedCountView = findViewById(R.id.changed_count);
         unchangedCountView = findViewById(R.id.unchanged_count);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
+        }
 
         // Set up vehicle info footer with overlay
         View overlay = findViewById(R.id.footer_overlay);
@@ -121,17 +124,6 @@ public class EcuComparisonActivity extends AppCompatActivity {
 
         // Populate comparison
         populateComparison(baselineScan, currentEcus);
-    }
-
-    @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
-        }
     }
 
     @Override

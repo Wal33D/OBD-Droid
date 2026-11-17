@@ -147,17 +147,6 @@ public class TrackModeActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         bindCommService();
@@ -235,6 +224,9 @@ public class TrackModeActivity extends AppCompatActivity implements
         gForceMeter = findViewById(R.id.g_force_meter);
         lapTimerView = findViewById(R.id.lap_timer_view);
         vehicleInfoFooter = findViewById(R.id.vehicle_info_footer);
+        if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
+        }
 
         // Initialize new widgets
         mapPreview = findViewById(R.id.map_preview);

@@ -5,7 +5,6 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseBooleanArray;
@@ -25,9 +24,8 @@ import android.preference.PreferenceManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -46,6 +44,7 @@ import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.adapters.ObdRecyclerAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.ui.activities.DashBoardActivity;
+import com.obddroid.utils.ReportFileWriter;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.HelpDialogUtils;
@@ -147,6 +146,7 @@ public class LiveDataActivity extends AppCompatActivity
         // Setup footer
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
             vehicleInfoFooter.setOverlayView(findViewById(R.id.footer_overlay));
         }
     }
@@ -245,18 +245,6 @@ public class LiveDataActivity extends AppCompatActivity
     }
 
     @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            log.info("Back button pressed - collapsing vehicle info footer");
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     public void pvChanged(PvChangeEvent event) {
         // When NEW PIDs are added (vehicle discovery), rebuild the adapter
         if ((event.getType() & PvChangeEvent.PV_ADDED) != 0) {
@@ -310,7 +298,7 @@ public class LiveDataActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == android.R.id.home) {
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         } else if (id == R.id.action_toggle_gps_telemetry) {
             toggleGpsTelemetry();
@@ -646,10 +634,8 @@ public class LiveDataActivity extends AppCompatActivity
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String filename = "live_data_" + timestamp + ".csv";
-            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(downloadsDir, filename);
-
-            FileWriter writer = new FileWriter(file);
+            // Built in memory, then saved through MediaStore (Documents/OBDroid) on Android 10+.
+            StringWriter writer = new StringWriter();
 
             // CSV Header
             writer.append("PID,Description,Value,Units\n");
@@ -677,8 +663,9 @@ public class LiveDataActivity extends AppCompatActivity
 
             writer.flush();
             writer.close();
+            ReportFileWriter.writeText(this, filename, "text/csv", writer.toString());
 
-            SnackbarHelper.showSuccess(this, "Saved to Downloads/" + filename);
+            SnackbarHelper.showSuccess(this, "Saved to Documents/OBDroid/" + filename);
             log.info("Live data exported to CSV: " + filename);
         } catch (IOException e) {
             log.severe("Error exporting CSV: " + e.getMessage());
@@ -693,8 +680,6 @@ public class LiveDataActivity extends AppCompatActivity
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String filename = "live_data_" + timestamp + ".json";
-            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(downloadsDir, filename);
 
             // Build JSON structure
             java.util.Map<String, java.util.Map<String, Object>> data = new java.util.HashMap<>();
@@ -721,12 +706,9 @@ public class LiveDataActivity extends AppCompatActivity
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(report);
 
-            FileWriter writer = new FileWriter(file);
-            writer.write(json);
-            writer.flush();
-            writer.close();
+            ReportFileWriter.writeText(this, filename, "application/json", json);
 
-            SnackbarHelper.showSuccess(this, "Saved to Downloads/" + filename);
+            SnackbarHelper.showSuccess(this, "Saved to Documents/OBDroid/" + filename);
             log.info("Live data exported to JSON: " + filename);
         } catch (IOException e) {
             log.severe("Error exporting JSON: " + e.getMessage());

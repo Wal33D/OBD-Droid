@@ -787,13 +787,9 @@ public class MainActivity extends AppCompatActivity
         // get additional permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
-            // Storage Permissions
-            final int REQUEST_EXTERNAL_STORAGE = 1;
-            final String[] PERMISSIONS_STORAGE = {
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            };
-            requestPermissions(PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            // Storage permission: only Android 9 and below need it (exports use MediaStore on 10+,
+            // and the manifest caps WRITE_EXTERNAL_STORAGE at maxSdkVersion 28).
+            PermissionManager.requestStoragePermissions(this);
             // Workaround for FileUriExposedException in Android >= M
             StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
             StrictMode.setVmPolicy(builder.build());

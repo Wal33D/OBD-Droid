@@ -60,6 +60,9 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
         // Initialize views
         scanListContainer = findViewById(R.id.scan_list_container);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
+        }
 
         // Set up vehicle info footer
         View overlay = findViewById(R.id.footer_overlay);
@@ -79,17 +82,6 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
         } else {
             log.warning("No VIN available");
             finish();
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
         }
     }
 

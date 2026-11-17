@@ -18,6 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.activity.ComponentActivity;
+import androidx.activity.OnBackPressedCallback;
+
 import com.obddroid.utils.VehicleData;
 import com.obddroid.obd.ElmProt;
 import com.automotivelogolibrary.AutomotiveLogoLibraryAndroid;
@@ -61,6 +64,17 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private View overlayView;
     private TypedPvList<Object, ProcessVar> vehicleInfoStore;
     private VehicleInfoReadyListener vehicleInfoReadyListener;
+
+    /**
+     * Collapses the footer on system back. Enabled only while the footer is expanded, so a back gesture
+     * with the footer closed goes straight to the system (predictive back animation, targetSdk 36).
+     */
+    private final OnBackPressedCallback collapseOnBack = new OnBackPressedCallback(false) {
+        @Override
+        public void handleOnBackPressed() {
+            collapse();
+        }
+    };
 
     /**
      * Listener for notifying when the footer has finished displaying decoded vehicle data.
@@ -314,7 +328,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
                     // Collapse if expanded
                     if (isExpanded) {
-                        isExpanded = false;
+                        setExpandedState(false);
                         ((TextView)expandIndicator).setRotation(0f);
                         expandedContainer.setVisibility(View.GONE);
                     }
@@ -579,8 +593,21 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         }
     }
 
+    /**
+     * Make system back collapse this footer while it is expanded. Replaces the activities' old
+     * onBackPressed() overrides, which are not called once predictive back is enabled.
+     */
+    public void attachBackHandler(ComponentActivity activity) {
+        activity.getOnBackPressedDispatcher().addCallback(activity, collapseOnBack);
+    }
+
+    private void setExpandedState(boolean expanded) {
+        isExpanded = expanded;
+        collapseOnBack.setEnabled(expanded);
+    }
+
     private void toggleExpanded() {
-        isExpanded = !isExpanded;
+        setExpandedState(!isExpanded);
         Log.d(TAG, "toggleExpanded: isExpanded = " + isExpanded);
 
         // Animate arrow rotation with smooth easing

@@ -1,6 +1,6 @@
 package com.obddroid.ecu;
 
-import com.obddroid.common.ProtoHeader;
+import java.util.Locale;
 
 /**
  * Definition of a single OBD failure code
@@ -16,19 +16,6 @@ public class ObdCodeItem extends EcuCodeItem
 
 	/** code types */
 	private static final String codeTypes = "PCBU";
-
-	private static final int ID_CODE_TYPE = 0;
-	private static final int ID_CODE_VALUE = 1;
-
-	/**
-	 * List of telegram parameters in order of appearance
-	 */
-	private static final int[][] TC_PARAMETERS =
-	/*  START,  LEN,     PARAM-TYPE     // REMARKS */
-    /* ------------------------------------------- */
-		{{0, 1, ProtoHeader.PT_ALPHA},   // ID_CODE_TYPE
-			{1, 4, ProtoHeader.PT_HEX},     // ID_CODE_VALUE
-		};
 
 	/** Creates a new instance of ObdCodeItem */
 	public ObdCodeItem()
@@ -86,11 +73,9 @@ public class ObdCodeItem extends EcuCodeItem
 	 */
 	static String getPCode(int numericCode)
 	{
-		char[] buffer = new char[5];
 		int codeType = numericCode >> 14;
 		int codeVal = numericCode & 0x3FFF;
-		ProtoHeader.setParamValue(ID_CODE_TYPE, TC_PARAMETERS, buffer, codeTypes.substring(codeType, codeType + 1));
-		ProtoHeader.setParamValue(ID_CODE_VALUE, TC_PARAMETERS, buffer, Integer.valueOf(codeVal));
-		return (new String(buffer));
+		// formatted locally: ProtoHeader's padding char is a global that is ' ' until an ObdProt exists (obd-i4t)
+		return String.format(Locale.ROOT, "%c%04X", codeTypes.charAt(codeType), codeVal);
 	}
 }

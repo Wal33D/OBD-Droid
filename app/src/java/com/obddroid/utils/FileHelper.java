@@ -30,6 +30,7 @@ import com.obddroid.ui.activities.MainActivity;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.R;
+import java.io.IOException;
 
 /**
  * Task to save measurements
@@ -165,7 +166,7 @@ public class FileHelper
 				mPath);
 			log.info(msg);
 			SnackbarHelper.showSuccess(context, msg, SnackbarHelper.Duration.SHORT);
-		} catch (Exception e)
+		} catch (IOException e)
 		{
 			SnackbarHelper.showError(context, e.toString(), SnackbarHelper.Duration.SHORT);
 			log.log(Level.WARNING, "Saving data failed", e);
@@ -240,7 +241,7 @@ public class FileHelper
 			// Plugin data removed - try to skip if present in old files
 			try {
 				oIn.readObject(); // Skip plugin data if present
-			} catch (Exception ignored) {
+			} catch (IOException | ClassNotFoundException ignored) {
 				// Ignore if no plugin data in file
 			}
 
@@ -248,7 +249,7 @@ public class FileHelper
 
 			log.log(Level.INFO, msg);
 			SnackbarHelper.showSuccess(context, msg, SnackbarHelper.Duration.SHORT);
-		} catch (Exception ex)
+		} catch (IOException | ClassNotFoundException | ClassCastException | SecurityException ex)
 		{
 			SnackbarHelper.showError(context, ex.toString(), SnackbarHelper.Duration.SHORT);
 			log.log(Level.SEVERE, uri.toString(), ex);

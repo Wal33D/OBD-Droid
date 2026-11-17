@@ -127,7 +127,7 @@ public class UsbCommService extends CommService
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 			result = Integer.parseInt(Objects.requireNonNull(prefs.getString(key, String.valueOf(defaultValue))));
 		}
-		catch (Exception ex)
+		catch (NumberFormatException | ClassCastException ex)
 		{
 			// log error message
 			log.severe(String.format("Preference '%s'(%d): %s", key, result, ex.toString()));

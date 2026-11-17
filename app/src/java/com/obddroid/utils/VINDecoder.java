@@ -10,6 +10,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Hybrid VIN Decoder - Parallel Race Strategy with Online/Offline
@@ -203,14 +207,19 @@ public class VINDecoder {
                         DebugLog.d(TAG, "  ⚡ Switching to online data (better quality)");
                         return onlineData;
                     }
-                } catch (Exception ignored) {
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException | TimeoutException ignored) {
                     // Online didn't finish in time, stick with offline
                 }
             }
 
             return winnerData;
 
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             Log.e(TAG, "Race timeout or error: " + e.getMessage());
 
             // Both failed, try to get any result
@@ -226,7 +235,7 @@ public class VINDecoder {
                 if (onlineData != null && onlineData.isValid()) {
                     return onlineData;
                 }
-            } catch (Exception ignored) {}
+            } catch (CompletionException | CancellationException ignored) {}
 
             // Total failure
             VehicleData errorData = new VehicleData();

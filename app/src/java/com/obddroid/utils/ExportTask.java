@@ -176,7 +176,7 @@ public class ExportTask {
             List<Entry> entries = (List<Entry>) entriesField.get(obj);
 
             return new SeriesExportData(label, entries);
-        } catch (Exception e) {
+        } catch (ReflectiveOperationException | ClassCastException e) {
             log.log(Level.WARNING, "Could not extract series data", e);
             return null;
         }

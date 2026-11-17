@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.io.IOException;
 
 /**
  * Online VIN decoder using NHTSA vPIC API
@@ -55,7 +56,7 @@ public class NhtsaVINDecoder {
             DebugLog.d(TAG, "Decoding VIN online: " + vin);
             String jsonResponse = fetchVinData(vin);
             return parseNhtsaResponse(jsonResponse, vin);
-        } catch (Exception e) {
+        } catch (IOException e) {
             Log.w(TAG, "Failed to decode VIN online: " + e.getMessage());
             return null;
         }
@@ -64,7 +65,7 @@ public class NhtsaVINDecoder {
     /**
      * Fetch VIN data from NHTSA API
      */
-    private String fetchVinData(String vin) throws Exception {
+    private String fetchVinData(String vin) throws IOException {
         URL url = new URL(NHTSA_API_URL + vin + "?format=json");
         HttpURLConnection connection = null;
 
@@ -77,7 +78,7 @@ public class NhtsaVINDecoder {
 
             int responseCode = connection.getResponseCode();
             if (responseCode != 200) {
-                throw new Exception("HTTP " + responseCode);
+                throw new IOException("HTTP " + responseCode);
             }
 
             BufferedReader reader = new BufferedReader(

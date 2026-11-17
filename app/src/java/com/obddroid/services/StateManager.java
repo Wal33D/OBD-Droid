@@ -253,7 +253,7 @@ public class StateManager {
 
             log.info("  ✓ ECU addresses cleared");
             return true;
-        } catch (Exception e) {
+        } catch (ReflectiveOperationException | SecurityException e) {
             log.severe("  ✗ Failed to clear ECU addresses: " + e.getMessage());
             return false;
         }
@@ -295,7 +295,8 @@ public class StateManager {
 
             log.info("  ✓ Adapter state reset");
             return true;
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.severe("  ✗ Failed to reset adapter: " + e.getMessage());
             return false;
         }
@@ -357,7 +358,7 @@ public class StateManager {
                         isClean = false;
                     }
                 }
-            } catch (Exception e) {
+            } catch (ReflectiveOperationException | SecurityException e) {
                 log.warning("  ! Could not validate ecuAddresses: " + e.getMessage());
             }
 

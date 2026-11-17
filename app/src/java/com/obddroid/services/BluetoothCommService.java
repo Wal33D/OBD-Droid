@@ -438,7 +438,7 @@ public class BluetoothCommService extends CommService
 					// connect fallback socket
 					mmSocket.connect();
 				}
-				catch (Exception e2)
+				catch (IOException | ReflectiveOperationException | SecurityException e2)
 				{
 					log.log(Level.SEVERE, e2.getMessage());
 					if (running) {

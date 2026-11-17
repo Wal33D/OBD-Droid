@@ -1,6 +1,6 @@
 [submodule "modules/automotive-logo-library"]
 	path = modules/automotive-logo-library
-	url = ../automotive-logo-library
+	url = https://github.com/Wal33D/automotive-logo-library.git
 [submodule "modules/dtc-database"]
 	path = modules/dtc-database
 	url = https://github.com/Wal33D/dtc-database.git

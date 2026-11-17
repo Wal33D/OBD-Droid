@@ -679,7 +679,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String filename = "vehicle_info_" + vin + "_" + timestamp + ".csv";
-            // Built in memory, then saved through MediaStore (Documents/OBDroid) on Android 10+.
+            // Built in memory, then saved through MediaStore (Documents/OBD-Droid) on Android 10+.
             StringWriter writer = new StringWriter();
 
             // CSV Header
@@ -723,7 +723,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
             writer.close();
             ReportFileWriter.writeText(this, filename, "text/csv", writer.toString());
 
-            showSnackbar("Saved to Documents/OBDroid/" + filename, SnackbarHelper.MessageType.SUCCESS);
+            showSnackbar("Saved to Documents/OBD-Droid/" + filename, SnackbarHelper.MessageType.SUCCESS);
         } catch (IOException e) {
             Log.e(TAG, "Error exporting CSV", e);
             showSnackbar("Failed to export CSV: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
@@ -743,7 +743,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
             ReportFileWriter.writeText(this, filename, "application/json", json);
 
-            showSnackbar("Saved to Documents/OBDroid/" + filename, SnackbarHelper.MessageType.SUCCESS);
+            showSnackbar("Saved to Documents/OBD-Droid/" + filename, SnackbarHelper.MessageType.SUCCESS);
         } catch (IOException e) {
             Log.e(TAG, "Error exporting JSON", e);
             showSnackbar("Failed to export JSON: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);

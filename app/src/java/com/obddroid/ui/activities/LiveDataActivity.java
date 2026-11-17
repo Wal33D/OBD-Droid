@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -634,7 +634,7 @@ public class LiveDataActivity extends AppCompatActivity
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String filename = "live_data_" + timestamp + ".csv";
-            // Built in memory, then saved through MediaStore (Documents/OBDroid) on Android 10+.
+            // Built in memory, then saved through MediaStore (Documents/OBD-Droid) on Android 10+.
             StringWriter writer = new StringWriter();
 
             // CSV Header
@@ -665,7 +665,7 @@ public class LiveDataActivity extends AppCompatActivity
             writer.close();
             ReportFileWriter.writeText(this, filename, "text/csv", writer.toString());
 
-            SnackbarHelper.showSuccess(this, "Saved to Documents/OBDroid/" + filename);
+            SnackbarHelper.showSuccess(this, "Saved to Documents/OBD-Droid/" + filename);
             log.info("Live data exported to CSV: " + filename);
         } catch (IOException e) {
             log.severe("Error exporting CSV: " + e.getMessage());
@@ -708,7 +708,7 @@ public class LiveDataActivity extends AppCompatActivity
 
             ReportFileWriter.writeText(this, filename, "application/json", json);
 
-            SnackbarHelper.showSuccess(this, "Saved to Documents/OBDroid/" + filename);
+            SnackbarHelper.showSuccess(this, "Saved to Documents/OBD-Droid/" + filename);
             log.info("Live data exported to JSON: " + filename);
         } catch (IOException e) {
             log.severe("Error exporting JSON: " + e.getMessage());

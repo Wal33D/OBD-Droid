@@ -1,8 +1,8 @@
-# OBD‑Droid
+# OBD-Droid
 
 **Full-stack Android diagnostics suite built for technicians, tuners, and enthusiasts.**
 
-OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicle workstation. From live telemetry to AutoCheck intelligence and an AI copilot, every module is engineered to make complex diagnostics feel effortless.
+OBD-Droid turns any ELM327-compatible adapter into a professional-grade vehicle workstation. From live telemetry to AutoCheck intelligence and an AI copilot, every module is engineered to make complex diagnostics feel effortless.
 
 > **TL;DR**
 > - Plug in any ELM327 adapter, launch the Android app, and get live data in under a minute.
@@ -19,7 +19,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 - **AI Copilot** – OpenAI ChatGPT delivers contextual answers using live vehicle data and prior conversations.
 - **Modular Architecture** – Service-driven Android app, standalone companion APIs, and reusable libraries.
 
-> _“From handshake to fix recommendation, OBD‑Droid shows how far Android can stretch inside the garage.”_
+> _“From handshake to fix recommendation, OBD-Droid shows how far Android can stretch inside the garage.”_
 
 ---
 

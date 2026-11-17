@@ -38,7 +38,7 @@ import io.github.recalllookup.core.RecallRecord;
  */
 public class RecallExporter {
 
-    private static final String EXPORT_DIRECTORY = Environment.DIRECTORY_DOCUMENTS + "/OBDroid";
+    private static final String EXPORT_DIRECTORY = Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid";
     private final Context context;
 
     public RecallExporter(Context context) {
@@ -81,7 +81,7 @@ public class RecallExporter {
         } else {
             // Legacy file system for Android 9 and below
             File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-            File obdroidDir = new File(documentsDir, "OBDroid");
+            File obdroidDir = new File(documentsDir, "OBD-Droid");
             if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                 throw new IOException("Unable to create export directory");
             }
@@ -164,7 +164,7 @@ public class RecallExporter {
         } else {
             // Legacy file system for Android 9 and below
             File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-            File obdroidDir = new File(documentsDir, "OBDroid");
+            File obdroidDir = new File(documentsDir, "OBD-Droid");
             if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                 throw new IOException("Unable to create export directory");
             }

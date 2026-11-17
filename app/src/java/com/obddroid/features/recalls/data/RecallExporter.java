@@ -1,25 +1,17 @@
 package com.obddroid.features.recalls.data;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 
 import com.obddroid.features.recalls.model.RecallSearchResult;
+import com.obddroid.utils.ReportFileWriter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -32,13 +24,11 @@ import io.github.recalllookup.core.RecallRecord;
  * Supports:
  * - CSV export with proper escaping
  * - JSON export with structured data
- * - Android Q+ MediaStore API
- * - Legacy file system for older Android versions
+ * - Saving under Documents/OBD-Droid through {@link ReportFileWriter}
  *
  */
 public class RecallExporter {
 
-    private static final String EXPORT_DIRECTORY = Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid";
     private final Context context;
 
     public RecallExporter(Context context) {
@@ -59,40 +49,8 @@ public class RecallExporter {
 
         String filename = buildExportFilename(result.getVin(), "csv");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Use MediaStore for Android 10+
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
-            values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, EXPORT_DIRECTORY);
-
-            Uri uri = context.getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-            if (uri == null) {
-                throw new IOException("Unable to create export file");
-            }
-
-            try (OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
-                 OutputStreamWriter osWriter = new OutputStreamWriter(outputStream);
-                 BufferedWriter writer = new BufferedWriter(osWriter)) {
-                writeCsvContent(writer, result);
-            }
-
-            return filename;
-        } else {
-            // Legacy file system for Android 9 and below
-            File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-            File obdroidDir = new File(documentsDir, "OBD-Droid");
-            if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
-                throw new IOException("Unable to create export directory");
-            }
-
-            File csvFile = new File(obdroidDir, filename);
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
-                writeCsvContent(writer, result);
-            }
-
-            return csvFile.getAbsolutePath();
-        }
+        return ReportFileWriter.write(context, filename, ReportFileWriter.MIME_CSV,
+                writer -> writeCsvContent(writer, result));
     }
 
     /**
@@ -142,40 +100,7 @@ public class RecallExporter {
 
         String jsonString = root.toString(2); // Pretty print with 2-space indent
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Use MediaStore for Android 10+
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
-            values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, EXPORT_DIRECTORY);
-
-            Uri uri = context.getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-            if (uri == null) {
-                throw new IOException("Unable to create export file");
-            }
-
-            try (OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
-                 OutputStreamWriter osWriter = new OutputStreamWriter(outputStream);
-                 BufferedWriter writer = new BufferedWriter(osWriter)) {
-                writer.write(jsonString);
-            }
-
-            return filename;
-        } else {
-            // Legacy file system for Android 9 and below
-            File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-            File obdroidDir = new File(documentsDir, "OBD-Droid");
-            if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
-                throw new IOException("Unable to create export directory");
-            }
-
-            File jsonFile = new File(obdroidDir, filename);
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(jsonFile))) {
-                writer.write(jsonString);
-            }
-
-            return jsonFile.getAbsolutePath();
-        }
+        return ReportFileWriter.writeText(context, filename, ReportFileWriter.MIME_JSON, jsonString);
     }
 
     /**

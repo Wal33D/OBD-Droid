@@ -1,18 +1,13 @@
 package com.obddroid.features.emissions.ui;
 
 import android.app.Dialog;
-import android.content.ContentValues;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -38,17 +33,14 @@ import com.obddroid.features.emissions.data.EmissionsReportGenerator;
 import com.obddroid.features.emissions.data.MonitorData;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.utils.ReportFileWriter;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 /**
  * Emissions Diagnostics Activity
@@ -423,95 +415,57 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
         String fileName = "emissions_report_" + timestamp + ".csv";
 
-        OutputStreamWriter writer = null;
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
-
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
-                    throw new IOException("Failed to create MediaStore entry");
-                }
-
-                OutputStream outputStream = getContentResolver().openOutputStream(uri);
-                if (outputStream == null) {
-                    throw new IOException("Failed to open MediaStore output stream");
-                }
-                writer = new OutputStreamWriter(outputStream);
-            } else {
-                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBD-Droid");
-                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
-                    throw new IOException("Unable to create export directory: " + obdroidDir.getAbsolutePath());
-                }
-                File csvFile = new File(obdroidDir, fileName);
-                writer = new OutputStreamWriter(new FileOutputStream(csvFile));
-            }
-
-            if (writer == null) {
-                throw new IOException("Output stream writer was null");
-            }
-
-            // Compute summary stats
-            int availableCount = 0;
-            int readyCount = 0;
-            for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
-                if (monitor.isAvailable) {
-                    availableCount++;
-                    if (monitor.isReady) {
-                        readyCount++;
+            ReportFileWriter.export(this, fileName, ReportFileWriter.MIME_CSV, writer -> {
+                // Compute summary stats
+                int availableCount = 0;
+                int readyCount = 0;
+                for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
+                    if (monitor.isAvailable) {
+                        availableCount++;
+                        if (monitor.isReady) {
+                            readyCount++;
+                        }
                     }
                 }
-            }
-            int notReadyCount = availableCount - readyCount;
-
-            writer.write(String.format(Locale.US,
-                    "OBD-Droid Emissions Report,%s\n", displayTimestamp));
-            writer.write(String.format(Locale.US,
-                    "Available Monitors,%d\nReady Monitors,%d\nMonitors Needing Drive Cycle,%d\n\n",
-                    availableCount, readyCount, notReadyCount));
-            writer.write("Monitor,Available,Ready,Completions,Conditions,Completion %,IUMPR Quality\n");
-
-            for (MonitorData monitor : getOrderedMonitorList()) {
-                if (monitor == null) {
-                    continue;
-                }
-                String completionPercent = monitor.getPercentageDisplay();
-                String quality = monitor.getIUMPRQuality();
-                // Avoid commas disrupting CSV by replacing with semicolons
-                if (quality != null) {
-                    quality = quality.replace(",", ";");
-                } else {
-                    quality = "";
-                }
+                int notReadyCount = availableCount - readyCount;
 
                 writer.write(String.format(Locale.US,
-                        "\"%s\",%s,%s,%d,%d,%s,%s\n",
-                        monitor.name,
-                        monitor.isAvailable ? "Yes" : "No",
-                        monitor.isReady ? "Yes" : "No",
-                        monitor.completions,
-                        monitor.conditions,
-                        completionPercent,
-                        quality));
-            }
+                        "OBD-Droid Emissions Report,%s\n", displayTimestamp));
+                writer.write(String.format(Locale.US,
+                        "Available Monitors,%d\nReady Monitors,%d\nMonitors Needing Drive Cycle,%d\n\n",
+                        availableCount, readyCount, notReadyCount));
+                writer.write("Monitor,Available,Ready,Completions,Conditions,Completion %,IUMPR Quality\n");
 
-            writer.flush();
+                for (MonitorData monitor : getOrderedMonitorList()) {
+                    if (monitor == null) {
+                        continue;
+                    }
+                    String completionPercent = monitor.getPercentageDisplay();
+                    String quality = monitor.getIUMPRQuality();
+                    // Avoid commas disrupting CSV by replacing with semicolons
+                    if (quality != null) {
+                        quality = quality.replace(",", ";");
+                    } else {
+                        quality = "";
+                    }
+
+                    writer.write(String.format(Locale.US,
+                            "\"%s\",%s,%s,%d,%d,%s,%s\n",
+                            monitor.name,
+                            monitor.isAvailable ? "Yes" : "No",
+                            monitor.isReady ? "Yes" : "No",
+                            monitor.completions,
+                            monitor.conditions,
+                            completionPercent,
+                            quality));
+                }
+            });
             showSnackbar("Emissions report saved: " + fileName);
             log.info("Emissions report exported successfully: " + fileName);
         } catch (IOException e) {
             log.warning("Failed to export emissions report: " + e.getMessage());
             showSnackbar("Failed to export emissions report");
-        } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException ignored) {
-                }
-            }
         }
     }
 
@@ -563,7 +517,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         String fileName = "emissions_report_" + timestamp + ".pdf";
 
         PdfDocument document = new PdfDocument();
-        OutputStream outputStream = null;
 
         try {
             // Create PDF page (8.5" x 11" at 72 DPI)
@@ -684,34 +637,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
             document.finishPage(page);
 
-            // Save to file
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
-
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
-                    throw new IOException("Failed to create MediaStore entry");
-                }
-
-                outputStream = getContentResolver().openOutputStream(uri);
-            } else {
-                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBD-Droid");
-                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
-                    throw new IOException("Unable to create export directory");
-                }
-                File pdfFile = new File(obdroidDir, fileName);
-                outputStream = new FileOutputStream(pdfFile);
-            }
-
-            if (outputStream == null) {
-                throw new IOException("Output stream was null");
-            }
-
-            document.writeTo(outputStream);
+            ReportFileWriter.exportStream(this, fileName, ReportFileWriter.MIME_PDF, document::writeTo);
             showSnackbar("PDF report saved: " + fileName);
             log.info("PDF report exported successfully: " + fileName);
 
@@ -720,12 +646,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             showSnackbar("Failed to export PDF report");
         } finally {
             document.close();
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException ignored) {
-                }
-            }
         }
     }
 
@@ -739,8 +659,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
         String fileName = "emissions_report_" + timestamp + ".json";
-
-        OutputStreamWriter writer = null;
 
         try {
             // Compute summary stats
@@ -797,39 +715,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 root.put("vehicle", vehicleInfo);
             }
 
-            // Save to file
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
-
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
-                    throw new IOException("Failed to create MediaStore entry");
-                }
-
-                OutputStream outputStream = getContentResolver().openOutputStream(uri);
-                if (outputStream == null) {
-                    throw new IOException("Failed to open MediaStore output stream");
-                }
-                writer = new OutputStreamWriter(outputStream);
-            } else {
-                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBD-Droid");
-                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
-                    throw new IOException("Unable to create export directory");
-                }
-                File jsonFile = new File(obdroidDir, fileName);
-                writer = new OutputStreamWriter(new FileOutputStream(jsonFile));
-            }
-
-            if (writer == null) {
-                throw new IOException("Output stream writer was null");
-            }
-
-            writer.write(root.toString(2)); // Pretty print with 2-space indent
-            writer.flush();
+            String json = root.toString(2); // Pretty print with 2-space indent
+            ReportFileWriter.export(this, fileName, ReportFileWriter.MIME_JSON, writer -> writer.write(json));
 
             showSnackbar("JSON report saved: " + fileName);
             log.info("JSON report exported successfully: " + fileName);
@@ -837,13 +724,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         } catch (Exception e) {
             log.warning("Failed to export JSON: " + e.getMessage());
             showSnackbar("Failed to export JSON report");
-        } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException ignored) {
-                }
-            }
         }
     }
 

@@ -265,6 +265,8 @@ public class MainActivity extends AppCompatActivity
      * Member object for the BT comm services
      */
     private CommService mCommService = null;
+    /** Time the ELM low-power command gets to go out before the link is closed on destroy. */
+    private static final long ELM_SLEEP_FLUSH_MS = 100;
     /**
      * file helper
      */
@@ -1071,17 +1073,9 @@ public class MainActivity extends AppCompatActivity
         // Stop toolbar hider thread
         setAutoHider(false);
 
-        try
-        {
-            // Reduce ELM power consumption by setting it to sleep
-            CommService.elm.goToSleep();
-            // wait until message is out ...
-            Thread.sleep(100, 0);
-        } catch (InterruptedException e)
-        {
-            // do nothing
-            log.log(Level.FINER, e.getLocalizedMessage());
-        }
+        // Reduce ELM power consumption by setting it to sleep. The link is closed
+        // ELM_SLEEP_FLUSH_MS later (below) so the command can go out without blocking the main thread.
+        CommService.elm.goToSleep();
 
         /* don't listen to ELM data changes any more */
         removeDataListeners();
@@ -1096,23 +1090,28 @@ public class MainActivity extends AppCompatActivity
         // stop demo service if it was started
         setMode(MODE.OFFLINE);
 
-        // stop communication service
-        if (mCommService != null)
-        {
-            mCommService.stop();
-        }
-
-        // if bluetooth adapter was switched OFF before ...
-        if (mBluetoothAdapter != null && !initialBtStateEnabled)
-        {
-            // ... turn it OFF again (only supported on Android 12 and below)
-            // Note: Android 13+ removed the ability for apps to disable Bluetooth
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                // Suppress deprecation - required for backward compatibility with API < 33
-                @SuppressWarnings("deprecation")
-                boolean disabled = mBluetoothAdapter.disable();
+        // stop communication service, then restore the Bluetooth state, once the sleep command is out
+        final CommService commService = mCommService;
+        final BluetoothAdapter btAdapter = mBluetoothAdapter;
+        final boolean restoreBtOff = !initialBtStateEnabled;
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (commService != null)
+            {
+                commService.stop();
             }
-        }
+
+            // if bluetooth adapter was switched OFF before ...
+            if (btAdapter != null && restoreBtOff)
+            {
+                // ... turn it OFF again (only supported on Android 12 and below)
+                // Note: Android 13+ removed the ability for apps to disable Bluetooth
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    // Suppress deprecation - required for backward compatibility with API < 33
+                    @SuppressWarnings("deprecation")
+                    boolean disabled = btAdapter.disable();
+                }
+            }
+        }, ELM_SLEEP_FLUSH_MS);
 
         log.info(String.format("%s %s finished",
                 getString(R.string.app_name),

@@ -1,0 +1,100 @@
+# Paths derived from AndrOBD (GPL-3.0), from docs/rewrite/PROVENANCE.md section 3 and
+# docs/rewrite/PLAN.md section 1 (bead obd-43g, 2026-11-16, main at 54ed8e5).
+#
+# One path per line, relative to the repository root. Lines starting with # are comments.
+# Used by:
+#   - clean-room implementers: never open these files (PLAN.md section 5). To search
+#     the tree, exclude them, for example
+#       git grep -n <pattern> -- app/src $(sed -e '/^#/d' -e '/^$/d' -e 's/^/:!/' docs/rewrite/derived-paths.txt)
+#   - the provenance gates (PLAN.md section 3.8): new code must not match these files.
+# Update this file in the same commit that deletes a path.
+
+# --- Code: do not open (clean implementers) -------------------------------------------
+# Protocol and decoding core: deleted in phase P5 (StreamHandler: P1)
+app/src/java/com/obddroid/obd/ElmProt.java
+app/src/java/com/obddroid/obd/ObdProt.java
+app/src/java/com/obddroid/obd/StreamHandler.java
+app/src/java/com/obddroid/obd/ProtUtils.java
+app/src/java/com/obddroid/obd/Messages.java
+app/src/java/com/obddroid/can/CanProt.java
+app/src/java/com/obddroid/can/CanProtFord.java
+app/src/java/com/obddroid/common/ProtoHeader.java
+app/src/java/com/obddroid/common/ProcessVariables.java
+app/src/java/com/obddroid/common/UTF8Bundle.java
+app/src/java/com/obddroid/common/package-info.java
+app/src/java/com/obddroid/interfaces/TelegramListener.java
+app/src/java/com/obddroid/interfaces/TelegramWriter.java
+app/src/java/com/obddroid/ecu/Conversion.java
+app/src/java/com/obddroid/ecu/Conversions.java
+app/src/java/com/obddroid/ecu/NumericConversion.java
+app/src/java/com/obddroid/ecu/EcuConversions.java
+app/src/java/com/obddroid/ecu/EcuDataItem.java
+app/src/java/com/obddroid/ecu/EcuDataItems.java
+app/src/java/com/obddroid/ecu/EcuDataPv.java
+app/src/java/com/obddroid/ecu/EcuCodeItem.java
+app/src/java/com/obddroid/ecu/EcuCodeList.java
+app/src/java/com/obddroid/ecu/ObdCodeItem.java
+app/src/java/com/obddroid/ecu/ObdCodeList.java
+app/src/java/com/obddroid/ecu/ObdPid.java
+# Transport: deleted in P1
+app/src/java/com/obddroid/services/CommService.java
+app/src/java/com/obddroid/services/BluetoothCommService.java
+app/src/java/com/obddroid/services/UsbCommService.java
+app/src/java/com/obddroid/services/NetworkCommService.java
+# User interface and helpers: deleted in P6
+app/src/java/com/obddroid/ui/activities/MainActivity.java
+app/src/java/com/obddroid/ui/activities/SettingsActivity.java
+app/src/java/com/obddroid/ui/activities/DashBoardActivity.java
+app/src/java/com/obddroid/ui/activities/ChartActivity.java
+app/src/java/com/obddroid/ui/activities/CustomPidActivity.java
+app/src/java/com/obddroid/ui/activities/UsbDeviceListActivity.java
+app/src/java/com/obddroid/ui/activities/BtDeviceListActivity.java
+app/src/java/com/obddroid/ui/adapters/ObdItemAdapter.java
+app/src/java/com/obddroid/ui/adapters/ObdGaugeAdapter.java
+app/src/java/com/obddroid/ui/adapters/ColorAdapter.java
+app/src/java/com/obddroid/ui/adapters/TestResultAdapter.java
+app/src/java/com/obddroid/ui/adapters/FaultCodeAdapter.java
+app/src/java/com/obddroid/ui/components/AutoHider.java
+app/src/java/com/obddroid/ui/components/MirrorRelativeLayout.java
+app/src/java/com/obddroid/utils/ExportTask.java
+app/src/java/com/obddroid/utils/FileHelper.java
+# Temporary glue written by integrators (PLAN.md section 5.3); deleted in P5
+app/src/java/com/obddroid/legacybridge/
+app/src/test/java/com/obddroid/legacybridge/
+
+# --- Data tables: do not open (clean implementers) ------------------------------------
+# Replaced in P2 by OBD-Droid's own table, deleted in P5
+app/src/resources/standard/pids.csv
+app/src/resources/standard/conversions.csv
+app/src/resources/standard/messages.csv
+# Loaded by nothing; also third-party data inside AndrOBD. Deleted in P0 (cleanup bead)
+app/src/resources/volkswagen_auto_group/
+
+# --- Resources: do not copy from (UI track, P6) ---------------------------------------
+# Shared files that every worker edits (strings.xml, colors.xml, dimens.xml, styles.xml,
+# AndroidManifest.xml) may be opened to add or change your own entries. Do not copy from
+# the derived entries. The UI track (P6) replaces the derived entries.
+app/src/main/res/layout/obd_gauge.xml
+app/src/main/res/layout/pid_customization.xml
+app/src/main/res/layout/device_name.xml
+app/src/main/res/layout/usb_list.xml
+app/src/main/res/layout/head_up.xml
+app/src/main/res/layout/device_list.xml
+app/src/main/res/layout/dashboard.xml
+app/src/main/res/layout/obd_item.xml
+app/src/main/res/layout/obd_list.xml
+app/src/main/res/layout/activity_fault_codes.xml
+app/src/main/res/layout/startup_layout.xml
+app/src/main/res/menu/context_graph.xml
+app/src/main/res/menu/obd_services.xml
+app/src/main/res/menu/main.xml
+app/src/main/res/menu/chart.xml
+app/src/main/res/values/refs.xml
+app/src/main/res/xml/device_filter.xml
+app/src/main/res/xml/settings.xml
+app/src/main/res/xml/provider_paths.xml
+app/src/main/res/drawable/activated_background.xml
+app/src/main/res/drawable/ic_speedometer.xml
+app/src/main/res/drawable/ic_headup.xml
+app/src/main/res/drawable/ic_filter.xml
+app/src/main/res/drawable/ic_chart.xml

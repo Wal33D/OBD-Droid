@@ -4,6 +4,13 @@ Bead: obd-4nc (rewrite step 1). Written 2026-11-16 against `main` at `05de190`.
 This is an engineering record of where code came from. It is not legal advice; the
 questions for the owner are at the end.
 
+**Update (obd-43g, 2026-11-16).** The behaviour spec has moved to
+[`docs/protocol-spec.md`](../protocol-spec.md). [`PLAN.md`](PLAN.md) holds the rewrite plan,
+plus a re-check of this inventory over the whole tree with `git blame -C -C`. The re-check
+agrees with section 3: no further derived files were found. It adds two small findings:
+attribution text left in comments (PLAN.md 1.5) and 15 boilerplate lines in
+`UnifiedAdapterSelectionActivity` (PLAN.md 1.4).
+
 ## 1. Summary
 
 - **OBD-Droid started as a renamed copy of AndrOBD.** The first commit in
@@ -264,7 +271,7 @@ Consequences for the rewrite:
 | VAG fault-code texts (`volkswagen_auto_group/codes.csv`) | AndrOBD, which credits "http://www.carscantool.de/PDF/FehlercodesVAGenglish.pdf … extracted painlessly using sed" | header comment in upstream `vag/res/codes.properties` | third-party list, copied twice; **rights uncertain** |
 | KW1281 conversion formulas (`kw1281_conversions.csv`) | AndrOBD, which credits "PDF-Manual of mOByDiC 2700 AllPro version 1.01 released 21.01.2006" | header of upstream `kw1281-conversions.txt` | third-party manual; **rights uncertain** |
 | Generic DTC descriptions in `modules/dtc-database` (MIT, Wal33D) | **uncertain** | 1,936 of AndrOBD's 3,584 `codes.properties` texts appear word-for-word in `dtc_codes.db`. AndrOBD's English `codes.properties` was in OBD-Droid's first commit. Both may instead trace to SAE J2012 wording, which is itself copyrighted SAE text | needs a separate provenance check of `modules/dtc-database/data/source-data/*` |
-| OBD PID table (`pids.csv`) | AndrOBD; the PID numbers and formulas are SAE J1979 facts | the selection, mnemonics, labels and layout are AndrOBD's | rewrite should rebuild the table from J1979-DA (see SPEC.md) |
+| OBD PID table (`pids.csv`) | AndrOBD; the PID numbers and formulas are SAE J1979 facts | the selection, mnemonics, labels and layout are AndrOBD's | rewrite should rebuild the table from J1979-DA (see `docs/protocol-spec.md`) |
 | `device_filter.xml` | AndrOBD; the vendor/product ID values are facts about USB serial chips | byte-identical | regenerate from chip vendors' published IDs |
 | jSerialComm (LGPL-3.0), usb-serial-for-android (MIT), others | Gradle dependencies | `NOTICE` | outside this bead; already listed in `NOTICE` |
 | Teensy ECU simulator (`obdsim` rig, MIT, © 2022 Sukkin Pang) | separate repository, used only as a test target | its `LICENSE` | not shipped in the app |
@@ -298,7 +305,7 @@ This document records facts; these questions need a lawyer, not an agent.
    shipped tree enough?
 4. **Is a rewrite by the same people independent work?** The people (and agents) who
    will write the new protocol layer have seen the AndrOBD-derived code. A strict clean
-   room separates the spec writer from the implementer. See SPEC.md section 0 for what
+   room separates the spec writer from the implementer. See `docs/protocol-spec.md` section 0 for what
    this bead did. Decide whether the step 2 implementer must be an agent or person with
    no access to the derived files, and whether that needs to be recorded.
 5. **Data tables.** PID formulas and DTC codes are facts from SAE J1979 / J2012. Can

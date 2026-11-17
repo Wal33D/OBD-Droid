@@ -24,8 +24,6 @@ import android.os.Message;
 import android.os.StrictMode;
 import androidx.preference.PreferenceManager;
 
-import com.obddroid.features.copilot.ui.CoPilotActivity;
-import com.obddroid.features.emissions.ui.EmissionsActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -61,8 +59,6 @@ import com.obddroid.ui.coordinators.CsvLoggingUiCoordinator;
 import com.obddroid.telemetry.GpsTelemetryManager;
 import com.obddroid.ui.coordinators.RemoteTelemetryUiCoordinator;
 import com.obddroid.telemetry.SensorTelemetryManager;
-import com.obddroid.features.vehiclehistory.ui.AutoCheckActivity;
-import com.obddroid.features.recalls.ui.RecallActivity;
 import com.obddroid.utils.DatabaseUpdateManager;
 
 import com.obddroid.ecu.DtcCatalog;
@@ -122,7 +118,6 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import com.obddroid.features.fueleconomy.ui.FuelEconomyActivity;
 
 /**
  * Main Activity for AndrOBD app
@@ -2682,105 +2677,6 @@ public class MainActivity extends AppCompatActivity
             log.log(Level.WARNING, "Error reconnecting to adapter", e);
             SnackbarHelper.showError(this, "Failed to reconnect. Please select an adapter manually.");
         }
-    }
-
-    /**
-     * Launch the Live Data activity
-     */
-    void launchLiveDataActivity() {
-        log.info("Launching Live Data activity");
-        Intent intent = new Intent(this, LiveDataActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the Fuel Economy activity
-     */
-    void launchFuelEconomyActivity() {
-        log.info("Launching Fuel Economy activity");
-        Intent intent = new Intent(this, FuelEconomyActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the Emissions Diagnostics activity
-     */
-    void launchEmissionsActivity() {
-        log.info("Launching Emissions Diagnostics activity");
-        Intent intent = new Intent(this, EmissionsActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the AutoCheck Vehicle History activity
-     */
-    void launchAutoCheckActivity() {
-        log.info("Launching Vehicle History (AutoCheck) activity");
-        Intent intent = new Intent(this, AutoCheckActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the NHTSA Safety Recalls activity
-     */
-    void launchRecallActivity() {
-        log.info("Launching Safety Recalls activity");
-        Intent intent = new Intent(this, RecallActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the Vehicle Info activity
-     */
-    void launchVehicleInfoActivity() {
-        log.info("Launching Vehicle Info activity");
-        Intent intent = new Intent(this, VehicleInfoActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the ECU List activity
-     */
-    void launchEcuListActivity() {
-        log.info("Launching ECU List activity");
-        Intent intent = new Intent(this, EcuListActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the Fault Codes activity
-     */
-    void launchFaultCodesActivity() {
-        log.info("Launching Fault Codes activity");
-        Intent intent = new Intent(this, FaultCodesActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the CoPilot AI Assistant activity
-     */
-    void launchCoPilotActivity() {
-        log.info("Launching CoPilot AI Assistant activity");
-        Intent intent = new Intent(this, CoPilotActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch the Full Vehicle Scan activity
-     */
-    void launchFullScanActivity() {
-        log.info("Launching Full Vehicle Scan activity");
-        Intent intent = new Intent(this, ScanActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Launch Track Mode activity
-     */
-    void launchTrackModeActivity() {
-        log.info("Launching Track Mode activity");
-        Intent intent = new Intent(this, com.obddroid.features.trackmode.TrackModeActivity.class);
-        startActivity(intent);
     }
 
     /**

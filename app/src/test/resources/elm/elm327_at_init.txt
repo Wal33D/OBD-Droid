@@ -1,0 +1,33 @@
+# ELM327 v1.5 power-up and AT initialisation, as OBD-Droid drives it after reset().
+# Invented session (no vehicle). Commands are queued and sent last-in first-out,
+# so the order on the wire is ATE0, ATL0, ATS0, ATAT0, ATSP0.
+@reset
+TX ATZ
+# echo is still on: the adapter repeats the command, the app must ignore it
+RX ATZ
+RX
+RX ELM327 v1.5
+>
+@status INITIALIZING
+TX ATE0
+RX ATE0
+RX OK
+>
+TX ATL0
+RX OK
+>
+TX ATS0
+RX OK
+>
+TX ATAT0
+RX OK
+>
+TX ATSP0
+RX OK
+>
+# queue empty while initialising -> query ECUs with headers on
+@status ECU_DETECT
+TX ATH1
+RX OK
+>
+TX 0100

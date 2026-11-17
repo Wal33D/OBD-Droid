@@ -1,0 +1,13 @@
+# ISO 15765-4 CAN 11-bit 500k: two ECUs answer 0100 during ECU detection (headers on).
+# Engine bitmask BFBEB893 is the obdsim firmware's mode 01 PID 00 reply.
+@include elm327_at_init.txt
+RX SEARCHING...
+RX 7E8 06 41 00 BF BE B8 93
+RX 7E9 06 41 00 80 00 00 00
+>
+# SEARCHING during ECU detection must not drop the state to CONNECTING
+@status ECU_DETECT
+TX ATH0
+RX OK
+>
+@status ECU_DETECTED

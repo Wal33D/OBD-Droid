@@ -1,0 +1,38 @@
+# Mode 01 PID discovery on CAN 11-bit, headers off, both ECUs answering 0100.
+# Bitmasks for 00/20/40 are the obdsim firmware's engine replies.
+@include can11_detect.txt
+@service 01
+TX 0100
+RX 41 00 BF BE B8 93
+RX 41 00 80 00 00 00
+>
+@status CONNECTED
+# bit 0 of the 00 block is set -> next block is requested
+TX 0120
+RX 41 20 A0 07 F1 19
+>
+TX 0140
+RX 41 40 FE D0 85 00
+>
+# discovery done -> the PID loop starts with the first supported PID
+TX 0101
+# MIL on, 2 codes; misfire/fuel/component supported and complete;
+# catalyst, EVAP, O2 sensor, O2 heater supported (C=65), EVAP incomplete (D=04)
+RX 41 01 82 07 65 04
+>
+TX 0103
+RX NO DATA
+>
+@status NODATA
+# NO DATA: next PID is queued, protocol re-selected first
+TX ATSP0
+RX OK
+>
+TX 0104
+RX 41 04 80
+>
+@status CONNECTED
+TX 0105
+RX 41 05 87
+>
+TX 0106

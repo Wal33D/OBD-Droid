@@ -1,0 +1,23 @@
+# ISO 9141-2: ECU detection with 3-byte headers (48 6B 10 ... checksum), then a Mode 09 VIN
+# as five numbered 7-byte lines without a byte count (SVC PID MSGID DATA).
+@include elm327_at_init.txt
+RX SEARCHING...
+RX BUS INIT: ...OK
+RX 48 6B 10 41 00 BE 3E B8 11 CA
+>
+TX ATH0
+RX OK
+>
+@status ECU_DETECTED
+@service 09
+TX 0900
+RX 49 00 01 40 00 00 00
+>
+TX 0902
+RX 49 02 01 00 00 00 31
+RX 49 02 02 48 47 42 48
+RX 49 02 03 34 31 4A 58
+RX 49 02 04 4D 4E 31 30
+RX 49 02 05 39 31 38 36
+>
+TX 0902

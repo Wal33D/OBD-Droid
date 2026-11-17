@@ -61,6 +61,11 @@ android {
     lint {
         abortOnError false
     }
+    testOptions {
+        // The protocol code logs through android.util.Log; in JVM unit tests the stub android.jar
+        // returns defaults instead of throwing "Method ... not mocked".
+        unitTests.returnDefaultValues = true
+    }
     namespace 'com.obddroid'
 }
 

@@ -1,0 +1,9 @@
+# Adapter-level error: DATA ERROR sets its status and warm-starts the ELM (ATWS) at the prompt.
+# (What happens after the ATWS banner is covered by ElmProtTranscriptTest.)
+@include can11_detect.txt
+@service 01
+TX 0100
+RX DATA ERROR
+>
+@status DATAERROR
+TX ATWS

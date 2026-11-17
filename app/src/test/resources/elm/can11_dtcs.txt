@@ -1,0 +1,16 @@
+# Reading trouble codes on CAN: Mode 03 with a count byte, then the queued 0A, 07 and 03 again
+# (the queue is sent last-in first-out).
+@include can11_detect.txt
+@service 03
+TX 03
+RX 43 02 03 01 C1 23
+>
+TX 0A
+RX 4A 00
+>
+TX 07
+RX 47 01 04 20
+>
+TX 03
+RX 43 02 03 01 C1 23
+>

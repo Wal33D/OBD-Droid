@@ -714,9 +714,15 @@ public class ElmProt
 				break;
 
 			case MODEL:
+				// the adapter (re)started (ATZ/ATWS banner): forget any error or
+				// partial response from before, otherwise the next prompt still
+				// sees that error and warm-starts the adapter again (obd-54d)
+				lastRxMsg = bufferStr;
+				charsExpected = 0;
+				responsePending = false;
 				initialize();
 				break;
-			
+
 			// received a PROMPT, what was the last response?
 			case PROMPT:
 				// check for last received message

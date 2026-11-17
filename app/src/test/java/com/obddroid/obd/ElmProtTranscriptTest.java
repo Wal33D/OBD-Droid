@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import com.obddroid.ecu.EcuCodeItem;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.beans.PropertyChangeEvent;
@@ -112,12 +111,34 @@ public class ElmProtTranscriptTest
 		}
 	}
 
-	@Ignore("obd-54d: after ATWS the stale error in lastRxMsg sends ATWS again instead of re-initialising")
 	@Test
 	public void warmStartBannerRunsTheAtInitialisationAgain() throws Exception
 	{
 		t.play("can11_adapter_errors.txt");
 		t.playText("after ATWS", "RX\nRX ELM327 v1.5\n>\n@status INITIALIZING\nTX ATE0\n")
+		 .assertNoUnexpectedTx();
+	}
+
+	@Test
+	public void everyAdapterErrorWarmStartsOnceThenReinitialises() throws Exception
+	{
+		// obd-54d: the banner after ATWS must clear the error, or the adapter loops on ATWS
+		for (String error : new String[]{"DATA ERROR", "BUFFER FULL", "<RX ERROR", "ERROR"})
+		{
+			setUp();
+			t.play("can11_detect.txt");
+			t.playText(error, "@service 01\nTX 0100\nRX " + error + "\n>\nTX ATWS\n"
+				+ "RX\nRX ELM327 v1.5\n>\n@status INITIALIZING\nTX ATE0\n")
+			 .assertNoUnexpectedTx();
+		}
+	}
+
+	@Test
+	public void resetAfterAnErrorReinitialisesInsteadOfWarmStarting() throws Exception
+	{
+		t.play("can11_detect.txt");
+		t.playText("reset after error", "@service 01\nTX 0100\nRX ERROR\n>\nTX ATWS\n"
+			+ "@reset\nTX ATZ\nRX\nRX ELM327 v1.5\n>\n@status INITIALIZING\nTX ATE0\n")
 		 .assertNoUnexpectedTx();
 	}
 

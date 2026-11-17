@@ -197,7 +197,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             showSaveReportDialog();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);

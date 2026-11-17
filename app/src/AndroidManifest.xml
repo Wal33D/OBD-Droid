@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Legacy Bluetooth permissions for Android 11 and below -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
 
     <!-- New Bluetooth permissions for Android 12+ (API 31+) -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <!-- Scans only list nearby OBD adapters; the app never derives location from them. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
     <!-- BLUETOOTH_ADVERTISE not needed as we don't make device discoverable -->
 
     <!-- to keep Bluetooth measurement running even when screen is inactive -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- allow saving screenshots -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- allow saving screenshots -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- allow access to WIFI adapter -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Exports go through MediaStore (Documents/OBDroid) on Android 10+, which needs no storage permission.
+         Android 9 and below still write the public Documents folder directly. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <!-- allow access to WIFI adapter -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -21,7 +30,12 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Add for Android 14+ foreground services -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- CsvLoggingService and ScanOrchestrator talk to the OBD adapter (Bluetooth, USB or WiFi):
+         connectedDevice, which has no daily limit (dataSync is capped at 6 h a day from Android 15). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Normal permission; satisfies the connectedDevice prerequisite for WiFi adapters when the
+         Bluetooth runtime permissions were not granted. -->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <!-- Add for CoPilot voice input -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -43,7 +57,9 @@
     </queries>
 
     <application
+        android:name="com.obddroid.ObdDroidApplication"
         android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
         android:description="@string/app_description"
         android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
@@ -214,11 +230,11 @@
         <service
             android:name="com.obddroid.services.CsvLoggingService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"/>
+            android:foregroundServiceType="connectedDevice"/>
         <service
             android:name="com.obddroid.scan.ScanOrchestrator"
             android:exported="false"
-            android:foregroundServiceType="dataSync"/>
+            android:foregroundServiceType="connectedDevice"/>
     </application>
 
 </manifest>

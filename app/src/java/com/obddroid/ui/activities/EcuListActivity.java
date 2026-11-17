@@ -107,6 +107,9 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
         progressBar = findViewById(R.id.progress_bar);
         scanButton = findViewById(R.id.scan_button);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
+        }
         snackbarAnchor = findViewById(R.id.content_frame);  // Use content frame for snackbar creation
 
         // Set up RecyclerView
@@ -142,17 +145,6 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
 
         // Start with empty view - wait for user to tap scan or import
         updateEmptyView();
-    }
-
-    @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
-        }
     }
 
     @Override

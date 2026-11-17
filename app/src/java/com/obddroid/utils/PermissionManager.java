@@ -43,10 +43,10 @@ public class PermissionManager {
         Manifest.permission.BLUETOOTH_ADMIN
     };
 
-    // Storage permissions (varies by API level)
+    // Storage permission for Android 9 and below only (manifest: maxSdkVersion 28). WRITE implies READ there;
+    // READ_EXTERNAL_STORAGE is no longer declared, so it must not be requested.
     private static final String[] STORAGE_PERMISSIONS = new String[]{
-        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.READ_EXTERNAL_STORAGE
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
     private static final String[] LOCATION_PERMISSIONS = new String[]{

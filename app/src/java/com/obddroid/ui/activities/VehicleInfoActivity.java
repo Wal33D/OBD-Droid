@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -26,12 +25,12 @@ import com.obddroid.R;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.HelpDialogUtils;
+import com.obddroid.utils.ReportFileWriter;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.VehicleData;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -78,6 +77,9 @@ public class VehicleInfoActivity extends AppCompatActivity {
         // vehicleSubtitle = findViewById(R.id.vehicle_subtitle);
         // vehicleIllustration = findViewById(R.id.vehicle_illustration);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
+        }
         footerOverlay = findViewById(R.id.footer_overlay);
 
         // Set up footer overlay interaction
@@ -94,17 +96,6 @@ public class VehicleInfoActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.vehicle_info_menu, menu);
         return true;
@@ -113,7 +104,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         } else if (item.getItemId() == R.id.action_refresh_vehicle_info) {
             loadVehicleData();
@@ -688,10 +679,8 @@ public class VehicleInfoActivity extends AppCompatActivity {
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String filename = "vehicle_info_" + vin + "_" + timestamp + ".csv";
-            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(downloadsDir, filename);
-
-            FileWriter writer = new FileWriter(file);
+            // Built in memory, then saved through MediaStore (Documents/OBDroid) on Android 10+.
+            StringWriter writer = new StringWriter();
 
             // CSV Header
             writer.append("Field,Value\n");
@@ -732,8 +721,9 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
             writer.flush();
             writer.close();
+            ReportFileWriter.writeText(this, filename, "text/csv", writer.toString());
 
-            showSnackbar("Saved to Downloads/" + filename, SnackbarHelper.MessageType.SUCCESS);
+            showSnackbar("Saved to Documents/OBDroid/" + filename, SnackbarHelper.MessageType.SUCCESS);
         } catch (IOException e) {
             Log.e(TAG, "Error exporting CSV", e);
             showSnackbar("Failed to export CSV: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
@@ -747,18 +737,13 @@ public class VehicleInfoActivity extends AppCompatActivity {
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String filename = "vehicle_info_" + vin + "_" + timestamp + ".json";
-            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(downloadsDir, filename);
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(data);
 
-            FileWriter writer = new FileWriter(file);
-            writer.write(json);
-            writer.flush();
-            writer.close();
+            ReportFileWriter.writeText(this, filename, "application/json", json);
 
-            showSnackbar("Saved to Downloads/" + filename, SnackbarHelper.MessageType.SUCCESS);
+            showSnackbar("Saved to Documents/OBDroid/" + filename, SnackbarHelper.MessageType.SUCCESS);
         } catch (IOException e) {
             Log.e(TAG, "Error exporting JSON", e);
             showSnackbar("Failed to export JSON: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);

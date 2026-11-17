@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -19,6 +20,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.ServiceCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
@@ -207,7 +209,9 @@ public class CsvLoggingService extends Service implements TypedPvChangeListener 
             ObdProt.PidPvs.addPvChangeListener(this, PvChangeEvent.PV_ALLEVENTS);
 
             Notification notification = createActiveNotification();
-            startForeground(NOTIFICATION_ID, notification);
+            // connectedDevice: logging streams from the OBD adapter (manifest foregroundServiceType).
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
             handler.postDelayed(automaticTimer, 1000);
         }
 

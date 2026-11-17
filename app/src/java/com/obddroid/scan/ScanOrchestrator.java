@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.preference.PreferenceManager;
 import android.os.Build;
@@ -15,6 +16,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 
 import com.obddroid.R;
 import com.obddroid.obd.ElmProt;
@@ -87,7 +89,9 @@ public class ScanOrchestrator extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Start foreground to prevent being killed during scan
-        startForeground(NOTIFICATION_ID, createNotification("Scan in progress..."));
+        // connectedDevice: the scan talks to the OBD adapter (manifest foregroundServiceType).
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, createNotification("Scan in progress..."),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
         return START_NOT_STICKY;
     }
 

@@ -101,17 +101,6 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
         setupVehicleFooter();
     }
 
-    @Override
-    public void onBackPressed() {
-        // If vehicle info footer is expanded, collapse it first before navigating back
-        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
-            vehicleInfoFooter.collapse();
-        } else {
-            // Footer not expanded or doesn't exist - proceed with normal back behavior
-            super.onBackPressed();
-        }
-    }
-
     private void initializeViews() {
         statusIcon = findViewById(R.id.fault_code_status_icon);
         codeNumber = findViewById(R.id.fault_code_number);
@@ -181,6 +170,7 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
     private void setupVehicleFooter() {
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.attachBackHandler(this);
             vehicleInfoFooter.setOverlayView(findViewById(R.id.footer_overlay));
         }
     }

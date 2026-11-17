@@ -7,6 +7,7 @@ import android.os.Handler;
 
 import com.obddroid.obd.StreamHandler;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -54,12 +55,15 @@ public class NetworkCommService
 		log.fine("stop");
 		elm.removeTelegramWriter(ser);
 		// close socket
-		try
+		if (mSocket != null)
 		{
-			mSocket.close();
-		} catch (Exception e)
-		{
-			log.severe(e.getMessage());
+			try
+			{
+				mSocket.close();
+			} catch (IOException e)
+			{
+				log.severe(e.getMessage());
+			}
 		}
 		setState(STATE.OFFLINE);
 	}
@@ -115,7 +119,7 @@ public class NetworkCommService
 
 				// start communication service thread
 				svc.start();
-			} catch (Exception e)
+			} catch (IOException | IllegalArgumentException | SecurityException e)
 			{
 				log.severe(e.getMessage());
 				connectionFailed();

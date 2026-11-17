@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import android.database.SQLException;
 
 /**
  * NHTSA Offline VIN Decoder - Offline VIN decoding using NHTSA vPIC SQLite database
@@ -224,7 +225,7 @@ public class NhtsaOfflineVINDecoder {
             } else {
                 Log.w(TAG, "✗ WMI '" + wmi + "' not found in database");
             }
-        } catch (Exception e) {
+        } catch (SQLException | IllegalStateException e) {
             Log.e(TAG, "Error querying make for WMI '" + wmi + "': " + e.getMessage(), e);
         }
     }
@@ -259,7 +260,7 @@ public class NhtsaOfflineVINDecoder {
                     extractModelFromSchema(schemaName, info);
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException | IllegalStateException e) {
             Log.w(TAG, "Error querying schema: " + e.getMessage());
         }
     }
@@ -442,7 +443,7 @@ public class NhtsaOfflineVINDecoder {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException | IllegalStateException e) {
             Log.w(TAG, "Error querying attribute from " + tableName + ": " + e.getMessage());
         }
     }
@@ -481,7 +482,7 @@ public class NhtsaOfflineVINDecoder {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException | IllegalStateException e) {
             Log.w(TAG, "Error querying pattern for element " + elementId + ": " + e.getMessage());
         }
     }
@@ -518,7 +519,7 @@ public class NhtsaOfflineVINDecoder {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException | IllegalStateException e) {
             Log.w(TAG, "Error querying attribute for element " + elementId + ": " + e.getMessage());
         }
     }

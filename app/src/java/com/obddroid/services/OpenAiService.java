@@ -12,6 +12,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.io.IOException;
 
 /**
  * Service for OpenAI Text-to-Speech API.
@@ -135,7 +136,7 @@ public class OpenAiService
             }
             return error.toString();
         }
-        catch (Exception e)
+        catch (IOException e)
         {
             return "Unknown error";
         }

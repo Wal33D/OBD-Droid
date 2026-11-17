@@ -149,10 +149,7 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
                     writer.write(event.toJsonLine());
                     writer.write('\n');
                     writer.flush();
-                } catch (Exception ex) {
-                    if (ex instanceof IOException) {
-                        throw (IOException) ex;
-                    }
+                } catch (JSONException ex) {
                     throw new IOException("Failed to encode discovery event", ex);
                 }
             }

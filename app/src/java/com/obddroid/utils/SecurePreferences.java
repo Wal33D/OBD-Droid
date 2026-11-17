@@ -12,6 +12,8 @@ import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Provides secure storage for sensitive data like API keys.
@@ -54,7 +56,7 @@ public class SecurePreferences
 
             return new SecretKeySpec(keyBytes, ALGORITHM);
         }
-        catch (Exception e)
+        catch (NoSuchAlgorithmException e)
         {
             log.log(Level.SEVERE, "Failed to generate encryption key", e);
             // Fallback to a default key (not secure, but allows app to function)
@@ -80,7 +82,7 @@ public class SecurePreferences
             byte[] encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
             return Base64.encodeToString(encrypted, Base64.DEFAULT);
         }
-        catch (Exception e)
+        catch (GeneralSecurityException e)
         {
             log.log(Level.SEVERE, "Failed to encrypt value", e);
             return "";
@@ -104,7 +106,7 @@ public class SecurePreferences
             byte[] decrypted = cipher.doFinal(Base64.decode(encrypted, Base64.DEFAULT));
             return new String(decrypted, StandardCharsets.UTF_8);
         }
-        catch (Exception e)
+        catch (GeneralSecurityException | IllegalArgumentException e)
         {
             log.log(Level.SEVERE, "Failed to decrypt value", e);
             return "";

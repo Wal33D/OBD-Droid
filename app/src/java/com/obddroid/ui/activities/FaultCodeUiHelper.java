@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -574,7 +575,7 @@ final class FaultCodeUiHelper
             intent.putExtra(SearchManager.QUERY, "OBD " + code);
             context.startActivity(intent);
         }
-        catch (Exception e)
+        catch (ActivityNotFoundException | SecurityException e)
         {
             log.log(Level.SEVERE, "WebSearch DFC", e);
             SnackbarHelper.showError(context, e.getMessage());
@@ -632,7 +633,7 @@ final class FaultCodeUiHelper
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             context.startActivity(intent);
         }
-        catch (Exception ex)
+        catch (ActivityNotFoundException | SecurityException ex)
         {
             log.log(Level.WARNING, "Failed to open nonda video link: " + url, ex);
             SnackbarHelper.showError(context, "Unable to open YouTube. Please try again later.");

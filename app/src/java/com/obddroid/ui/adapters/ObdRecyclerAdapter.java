@@ -599,7 +599,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             android.net.Uri geoUri = android.net.Uri.parse(String.format("geo:%f,%f?z=15", latitude, longitude));
             android.content.Intent mapIntent = new android.content.Intent(android.content.Intent.ACTION_VIEW, geoUri);
             context.startActivity(mapIntent);
-        } catch (Exception e) {
+        } catch (android.content.ActivityNotFoundException | SecurityException e) {
             android.util.Log.e("ObdRecyclerAdapter", "Failed to open map: " + e.getMessage());
         }
     }

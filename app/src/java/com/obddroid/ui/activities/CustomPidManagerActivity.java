@@ -3,6 +3,7 @@ package com.obddroid.ui.activities;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.database.SQLException;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,11 +30,13 @@ import com.obddroid.R;
 import com.obddroid.custompid.CustomPid;
 import com.obddroid.custompid.CustomPidManager;
 import com.obddroid.custompid.CustomPidIntegration;
+import com.obddroid.custompid.PidFormulaParser;
 import com.obddroid.utils.HelpDialogUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -196,7 +199,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
 
                 refreshPidList();
                 notifyCustomPidsChanged();  // Notify live data to refresh
-            } catch (Exception e) {
+            } catch (PidFormulaParser.FormulaException | SQLException e) {
                 Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
@@ -230,7 +233,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                 Toast.makeText(this, pid.isEnabled() ? "PID enabled" : "PID disabled", Toast.LENGTH_SHORT).show();
                 refreshPidList();
                 notifyCustomPidsChanged();  // Notify live data to refresh
-            } catch (Exception e) {
+            } catch (PidFormulaParser.FormulaException | SQLException e) {
                 Toast.makeText(this, "Error updating PID: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
@@ -375,7 +378,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                 outputStream.close();
                 Toast.makeText(this, "Exported " + pidList.size() + " PIDs to CSV", Toast.LENGTH_SHORT).show();
             }
-        } catch (Exception e) {
+        } catch (IOException | SecurityException e) {
             Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
@@ -392,7 +395,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                 outputStream.close();
                 Toast.makeText(this, "Exported " + pidList.size() + " PIDs", Toast.LENGTH_SHORT).show();
             }
-        } catch (Exception e) {
+        } catch (IOException | SecurityException e) {
             Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
@@ -415,7 +418,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                 refreshPidList();
                 notifyCustomPidsChanged();
             }
-        } catch (Exception e) {
+        } catch (IOException | SecurityException e) {
             Toast.makeText(this, "Import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
@@ -440,7 +443,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                 refreshPidList();
                 notifyCustomPidsChanged();
             }
-        } catch (Exception e) {
+        } catch (IOException | SecurityException e) {
             Toast.makeText(this, "Import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }

@@ -3,6 +3,7 @@ package com.obddroid.ui.activities;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
@@ -431,7 +432,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
         try {
             startActivity(Intent.createChooser(shareIntent, "Share Scan Report"));
-        } catch (Exception e) {
+        } catch (ActivityNotFoundException | SecurityException e) {
             showSnackbar("Unable to share report: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
         }
     }

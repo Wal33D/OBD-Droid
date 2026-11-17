@@ -3,6 +3,7 @@ package com.obddroid.ui.activities;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -271,7 +272,7 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl));
             startActivity(intent);
-        } catch (Exception e) {
+        } catch (ActivityNotFoundException | SecurityException e) {
             log.log(Level.SEVERE, "Failed to open nonda video", e);
             SnackbarHelper.showError(this, getString(R.string.fault_codes_nonda_failed));
         }

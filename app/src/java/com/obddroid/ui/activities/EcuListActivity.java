@@ -45,6 +45,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -1219,7 +1220,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
                     return outputFormat.format(date);
                 }
             }
-        } catch (Exception e) {
+        } catch (ParseException e) {
             log.warning("Could not extract timestamp from filename: " + filename + " - " + e.getMessage());
         }
 

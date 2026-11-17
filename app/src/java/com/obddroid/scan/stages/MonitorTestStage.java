@@ -79,12 +79,10 @@ public final class MonitorTestStage implements ScanStage {
 
     private MonitorSnapshot buildSnapshot() {
         MonitorSnapshot snapshot = new MonitorSnapshot();
-        // CRITICAL: Parse IUMPR data FIRST to populate conditions, THEN check readiness
-        // The applyReadiness() method checks monitor.conditions to determine if non-continuous
-        // monitors are available when the incomplete bit is clear. If we parse readiness first,
-        // conditions=0 and monitors are incorrectly marked as unavailable.
-        snapshot.populateIumprFromVid();     // Parse IUMPR FIRST to populate conditions
-        snapshot.populateReadinessFromPid(); // Then parse readiness (uses conditions values)
+        // IUMPR first, then PID 01 readiness, so readiness (authoritative) wins over any
+        // availability the IUMPR pass inferred.
+        snapshot.populateIumprFromVid();
+        snapshot.populateReadinessFromPid();
         snapshot.computeOverall();
         return snapshot;
     }
@@ -372,24 +370,12 @@ public final class MonitorTestStage implements ScanStage {
                     available = supported;
                     ready = supported && !incomplete;
                 } else {
-                    boolean incompleteBit = (raw & 0x100) != 0;
-                    if (incompleteBit) {
-                        // Incomplete bit set = monitor is available but not ready
-                        available = true;
-                        ready = false;
-                    } else {
-                        // Incomplete bit clear = monitor is either not supported OR complete
-                        // Use IUMPR data to disambiguate: if conditions > 0, monitor is supported
-                        // NOTE: We parse IUMPR BEFORE readiness (in buildSnapshot), so conditions is populated!
-                        if (conditions > 0) {
-                            available = true;
-                            ready = true;
-                        } else {
-                            // No IUMPR data + bit clear = not supported by this vehicle
-                            available = false;
-                            ready = false;
-                        }
-                    }
+                    // J1979 PID 01 bytes C/D, decoded as ((C << 8 | D) >> n) & 0x101:
+                    // 0x100 = supported (byte C), 0x001 = not complete (byte D)
+                    boolean supported = (raw & 0x100) != 0;
+                    boolean incomplete = (raw & 0x001) != 0;
+                    available = supported;
+                    ready = supported && !incomplete;
                 }
             } else {
                 String status = String.valueOf(valueObj);

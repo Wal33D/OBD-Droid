@@ -118,7 +118,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -184,10 +183,6 @@ public class MainActivity extends AppCompatActivity
      * app exit parameters
      */
     private static final int EXIT_TIMEOUT = 2500;
-    /**
-     * reconnect cooldown time in milliseconds
-     */
-    private static final int RECONNECT_COOLDOWN_MS = 15000;
     /**
      * time between display updates to represent data changes
      */
@@ -282,10 +277,6 @@ public class MainActivity extends AppCompatActivity
      */
     private CommService mCommService = null;
     /**
-     * timestamp of last reconnect attempt to prevent spam
-     */
-    private long lastReconnectTime = 0;
-    /**
      * file helper
      */
     private FileHelper fileHelper;
@@ -324,27 +315,12 @@ public class MainActivity extends AppCompatActivity
      */
     private int obdService = ElmProt.OBD_SVC_NONE;
     /**
-     * current operating mode
+     * operating mode, ECU state and reconnect/disconnect guards
      */
-    private MODE mode = MODE.OFFLINE;
-    /**
-     * current ECU connection state
-     */
-    private ElmProt.STAT ecuConnectionState = ElmProt.STAT.UNDEFINED;
-    /**
-     * Track if ECU has been selected by user
-     */
-    private boolean ecuUserSelected = false;
+    private final MainConnectionState connection = new MainConnectionState();
 
     // === Connection Cycle Detection for Unsupported Modes ===
     private UnsupportedModeHelper unsupportedModeHelper;
-
-    // === Auto-Reconnect Tracking ===
-    private boolean hasAttemptedAutoReconnect = false;
-    private boolean isManuallyReconnecting = false; // Flag to prevent infinite loop during manual reconnect
-
-    // === Disconnect Deduplication ===
-    private final AtomicBoolean isDisconnecting = new AtomicBoolean(false); // Prevent multiple concurrent disconnects
 
     // === Auto-Reconnect Countdown UI ===
     private View autoReconnectCountdownBar;
@@ -379,7 +355,7 @@ public class MainActivity extends AppCompatActivity
     private ConnectionOverlayState overlayState = ConnectionOverlayState.OFFLINE;
 
     ElmProt.STAT getEcuConnectionState() {
-        return ecuConnectionState;
+        return connection.getEcuConnectionState();
     }
 
     UnsupportedModeHelper getUnsupportedModeHelper() {
@@ -387,11 +363,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     long getLastReconnectTime() {
-        return lastReconnectTime;
+        return connection.getLastReconnectTime();
     }
 
     int getReconnectCooldownMs() {
-        return RECONNECT_COOLDOWN_MS;
+        return MainConnectionState.RECONNECT_COOLDOWN_MS;
     }
 
     SharedPreferences getPrefs() {
@@ -424,7 +400,7 @@ public class MainActivity extends AppCompatActivity
                             case CONNECTED:
                                 // Only call onConnect() for NEW connections, not when already connected
                                 // This prevents re-initialization when activity recreates with existing connection
-                                if (mode != MODE.ONLINE)
+                                if (connection.getMode() != MODE.ONLINE)
                                 {
                                     log.info("New connection detected - initializing");
                                     setOverlayState(ConnectionOverlayState.DECODING);
@@ -571,40 +547,20 @@ public class MainActivity extends AppCompatActivity
                         evt = (PropertyChangeEvent) msg.obj;
                         ElmProt.STAT state = (ElmProt.STAT) evt.getNewValue();
 
-                        // Check if we should skip status updates for fault codes mode
-                        boolean skipStatusUpdate = false;
-                        boolean viewingFaultCodes = (currDataAdapter == mDfcAdapter);
-
-                        // Simple rule: When viewing fault codes, suppress NODATA and CONNECTING states
-                        // These states are normal when reading codes or when background services poll
-                        // Keep showing the last good status (Connected/ECU Selected) instead
-                        if (viewingFaultCodes && (state == ElmProt.STAT.NODATA || state == ElmProt.STAT.CONNECTING)) {
-                            skipStatusUpdate = true;
-                        }
-
-                        ecuConnectionState = state; // Track ECU connection state
+                        // Track the ECU state; fault code views keep their status through NODATA/CONNECTING
+                        ElmProt.STAT shownState = connection.onProtocolState(state, currDataAdapter == mDfcAdapter);
 
                         // Update VehicleManager with ECU connection state
                         VehicleManager.getInstance().setECUConnectionState(state);
 
                         // === Detect connection cycles for unsupported modes ===
                         if (unsupportedModeHelper != null) {
-                            unsupportedModeHelper.onStateChanged(state, ecuConnectionState);
+                            unsupportedModeHelper.onStateChanged(state, connection.getEcuConnectionState());
                         }
 
-                        /* Show ELM status only in ONLINE mode */
-                        if (getMode() != MODE.DEMO && !skipStatusUpdate)
+                        if (shownState != null)
                         {
-                            // Don't overwrite "ECU selected" status when state changes to CONNECTED
-                            if (!(ecuUserSelected && state == ElmProt.STAT.CONNECTED)) {
-                                // Special handling for ECU_SELECTED state
-                                if (ecuUserSelected && state == ElmProt.STAT.ECU_DETECTED) {
-                                    // Keep showing ECU selected when we're in ECU_DETECTED but user has selected
-                                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                                } else {
-                                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[state.ordinal()]);
-                                }
-                            }
+                            setEcuStatus(shownState);
                         }
 
                         // Enable individual OBD services only when ECU is detected
@@ -641,8 +597,8 @@ public class MainActivity extends AppCompatActivity
                             // Auto-proceed without ECU selection dialog
                             // CAN bus protocol naturally routes queries to correct ECUs based on PID
                             // No need to filter or manually select - let the bus handle it
-                            ecuUserSelected = true;
-                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                            connection.setEcuUserSelected(true);
+                            setEcuStatus(ElmProt.STAT.ECU_SELECTED);
                             VehicleManager.getInstance().setECUSelected(true);
                             VinDataHelper.triggerVinRetrieval();
                         }
@@ -658,9 +614,9 @@ public class MainActivity extends AppCompatActivity
                             String nrcMsg = (String) evt.getNewValue();
 
                             // Special handling for "Feature not available" errors (0x12)
-                            if (nrc.code == 0x12) {
+                            switch (MainConnectionState.nrcAction(nrc.code, CommService.elm.getService())) {
                                 // For Mode 9 (Vehicle Info) - complete service failure
-                                if (CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
+                                case VIN_UNSUPPORTED: {
                                     // Mode 9 not supported - notify VehicleManager only if not already attempted
                                     VehicleManager vm = VehicleManager.getInstance();
                                     if (!vm.hasVINRetrievalFailed()) {
@@ -677,7 +633,7 @@ public class MainActivity extends AppCompatActivity
                                     return;
                                 }
                                 // For Mode 8 (Test Control) - not supported by most vehicles
-                                if (CommService.elm.getService() == ObdProt.OBD_SVC_CTRL_MODE) {
+                                case TEST_CONTROL_UNSUPPORTED:
                                     // Show helpful message and switch back to dashboard
                                     SnackbarHelper.showInfo(MainActivity.this,
                                         "Test Control (Mode 8) not supported by this vehicle. This is normal for most consumer vehicles.");
@@ -687,13 +643,13 @@ public class MainActivity extends AppCompatActivity
                                         }
                                     }, 500);
                                     return;
-                                }
                                 // For Mode 1 (Live Data) - individual PID not supported is normal
-                                // Don't show error for individual unsupported PIDs
-                                if (CommService.elm.getService() == ObdProt.OBD_SVC_DATA) {
-                                    // Silently ignore - some PIDs aren't supported by all vehicles
+                                // Silently ignore - some PIDs aren't supported by all vehicles
+                                case IGNORE:
                                     return;
-                                }
+                                case SHOW:
+                                default:
+                                    break;
                             }
                             switch (nrc.disp)
                             {
@@ -875,7 +831,7 @@ public class MainActivity extends AppCompatActivity
                 mBluetoothAdapter = bluetoothManager != null ? bluetoothManager.getAdapter() : null;
                 log.fine("Adapter: " + mBluetoothAdapter);
                 // If BT is not on, request that it be enabled.
-                if (getMode() != MODE.DEMO && mBluetoothAdapter != null)
+                if (connection.getMode() != MODE.DEMO && mBluetoothAdapter != null)
                 {
                     // remember initial bluetooth state
                     initialBtStateEnabled = mBluetoothAdapter.isEnabled();
@@ -954,7 +910,7 @@ public class MainActivity extends AppCompatActivity
 
         // Restore OBD service if it was stopped by child activity (e.g., EmissionsActivity)
         // This prevents Bluetooth timeout disconnects when returning to MainActivity
-        if (CommService.elm != null && mCommService != null && mode == MODE.ONLINE)
+        if (CommService.elm != null && mCommService != null && connection.getMode() == MODE.ONLINE)
         {
             int currentService = CommService.elm.getService();
 
@@ -1002,10 +958,10 @@ public class MainActivity extends AppCompatActivity
                     // IMPORTANT: Don't call onConnect() here - that resets adapter, clears data,
                     // and restarts discovery session. onConnect() should ONLY be called when
                     // MESSAGE_STATE_CHANGE indicates a NEW connection, not on activity resume.
-                    if (mode != MODE.ONLINE)
+                    if (connection.getMode() != MODE.ONLINE)
                     {
                         log.info("Syncing UI to ONLINE mode (already connected - no re-init)");
-                        mode = MODE.ONLINE;
+                        connection.setMode(MODE.ONLINE);
                         setMenuItemVisible(R.id.secure_connect_scan, false);
                         setMenuItemVisible(R.id.disconnect, true);
                         updateServiceMenuItems(true);
@@ -1022,7 +978,7 @@ public class MainActivity extends AppCompatActivity
                 case NONE:
                 default:
                     // Service is offline, ensure UI reflects this
-                    if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                    if (connection.getMode() != MODE.OFFLINE && connection.getMode() != MODE.DEMO && connection.getMode() != MODE.FILE)
                     {
                         onDisconnect();
                     }
@@ -1032,7 +988,7 @@ public class MainActivity extends AppCompatActivity
         else
         {
             // No CommService means offline
-            if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+            if (connection.getMode() != MODE.OFFLINE && connection.getMode() != MODE.DEMO && connection.getMode() != MODE.FILE)
             {
                 setStatus(getString(R.string.status_connect_device));
             }
@@ -1238,10 +1194,10 @@ public class MainActivity extends AppCompatActivity
                             if (unsupportedModeHelper != null) {
                                 ElmProt.STAT savedState = unsupportedModeHelper.getSavedEcuState();
                                 if (savedState != ElmProt.STAT.UNDEFINED &&
-                                    ecuConnectionState == ElmProt.STAT.NODATA) {
+                                    connection.getEcuConnectionState() == ElmProt.STAT.NODATA) {
                                     log.info("Restoring saved ECU state after backing out: " + savedState);
-                                    ecuConnectionState = savedState;
-                                    VehicleManager.getInstance().setECUConnectionState(ecuConnectionState);
+                                    connection.setEcuConnectionState(savedState);
+                                    VehicleManager.getInstance().setECUConnectionState(savedState);
                                 }
 
                                 // Reset cycle detection
@@ -1410,7 +1366,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
         // Update menu items based on current connection state
         // This ensures the correct button (connect/disconnect) is shown when returning from other activities
-        switch (mode) {
+        switch (connection.getMode()) {
             case ONLINE:
             case DEMO:
             case FILE:
@@ -1467,8 +1423,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 // Reset connection state
-                ecuConnectionState = ElmProt.STAT.UNDEFINED;
-                ecuUserSelected = false;
+                connection.resetEcu();
 
                 // Clear vehicle data (after ending sessions)
                 try {
@@ -1478,7 +1433,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 // Force mode to OFFLINE first to ensure clean state
-                mode = MODE.OFFLINE;
+                connection.setMode(MODE.OFFLINE);
 
                 // Update UI to show disconnected state
                 setMenuItemVisible(R.id.disconnect, false);
@@ -1517,8 +1472,7 @@ public class MainActivity extends AppCompatActivity
                 return true;
 
             case R.id.service_data:
-                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
-                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                if (connection.isEcuReady()) {
                     setObdService(ObdProt.OBD_SVC_DATA, item.getTitle());
                 } else {
                     SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
@@ -1526,8 +1480,7 @@ public class MainActivity extends AppCompatActivity
                 return true;
 
             case R.id.service_testcontrol:
-                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
-                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                if (connection.isEcuReady()) {
                     setObdService(ObdProt.OBD_SVC_CTRL_MODE, item.getTitle());
                 } else {
                     SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
@@ -1535,8 +1488,7 @@ public class MainActivity extends AppCompatActivity
                 return true;
 
             case R.id.service_codes:
-                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
-                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                if (connection.isEcuReady()) {
                     setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
                 } else {
                     SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
@@ -2102,7 +2054,7 @@ public class MainActivity extends AppCompatActivity
             case ObdProt.OBD_SVC_PERMACODES:
             case ObdProt.OBD_SVC_PENDINGCODES:
                 // Show the same modal as regular tap for consistency
-                FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, ecuConnectionState);
+                FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, connection.getEcuConnectionState());
                 break;
 
             case ObdProt.OBD_SVC_CTRL_MODE:
@@ -2128,7 +2080,7 @@ public class MainActivity extends AppCompatActivity
             case ObdProt.OBD_SVC_READ_CODES:
             case ObdProt.OBD_SVC_PERMACODES:
             case ObdProt.OBD_SVC_PENDINGCODES:
-                FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, ecuConnectionState);
+                FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, connection.getEcuConnectionState());
                 break;
         }
     }
@@ -2422,7 +2374,7 @@ public class MainActivity extends AppCompatActivity
      */
     private MODE getMode()
     {
-        return mode;
+        return connection.getMode();
     }
 
     /**
@@ -2433,7 +2385,7 @@ public class MainActivity extends AppCompatActivity
     private void setMode(MODE mode)
     {
         // if this is a mode change, or file reload ...
-        if (mode != this.mode || mode == MODE.FILE)
+        if (mode != connection.getMode() || mode == MODE.FILE)
         {
             if (mode != MODE.DEMO)
             {
@@ -2470,7 +2422,7 @@ public class MainActivity extends AppCompatActivity
             }
             // remember previous mode
             // set new mode
-            this.mode = mode;
+            connection.setMode(mode);
             // Set appropriate status message based on mode
             switch (mode) {
                 case OFFLINE:
@@ -2593,7 +2545,7 @@ public class MainActivity extends AppCompatActivity
         if (getMode() != MODE.DEMO)
         {
             // Reset ECU selection state
-            ecuUserSelected = false;
+            connection.setEcuUserSelected(false);
 
             setStatus(getString(R.string.demo));
             // No snackbar - consistent with real device connection
@@ -2620,6 +2572,28 @@ public class MainActivity extends AppCompatActivity
     private void updateServiceMenuItems(boolean enable) {
         // Settings icon is now directly in the toolbar and always enabled
         // This method is kept for compatibility but no longer manages menu items
+    }
+
+    /**
+     * show an ELM protocol state as the status message
+     *
+     * @param state protocol state, shown with its elmcomm_states text
+     */
+    private void setEcuStatus(ElmProt.STAT state)
+    {
+        setStatus(getResources().getStringArray(R.array.elmcomm_states)[state.ordinal()]);
+    }
+
+    /**
+     * show the ECU state after a service switch, if there is one to show
+     */
+    private void showServiceStatus()
+    {
+        ElmProt.STAT state = connection.serviceStatus();
+        if (state != null)
+        {
+            setEcuStatus(state);
+        }
     }
 
     /**
@@ -2680,9 +2654,9 @@ public class MainActivity extends AppCompatActivity
         // Since connect() is now async, we need to ensure the flag gets cleared
         // even if the connection fails silently
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (isManuallyReconnecting) {
+            if (connection.isManuallyReconnecting()) {
                 log.info("Clearing manual reconnect flag after connection attempt");
-                isManuallyReconnecting = false;
+                connection.setManuallyReconnecting(false);
             }
         }, 5000);  // 5 seconds is enough for connection to succeed or fail
     }
@@ -2703,9 +2677,9 @@ public class MainActivity extends AppCompatActivity
         // Since connect() is now async, we need to ensure the flag gets cleared
         // even if the connection fails silently
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (isManuallyReconnecting) {
+            if (connection.isManuallyReconnecting()) {
                 log.info("Clearing manual reconnect flag after connection attempt");
-                isManuallyReconnecting = false;
+                connection.setManuallyReconnecting(false);
             }
         }, 5000);  // 5 seconds is enough for connection to succeed or fail
     }
@@ -2719,36 +2693,40 @@ public class MainActivity extends AppCompatActivity
 
         // Check cooldown to prevent spam
         long currentTime = System.currentTimeMillis();
-        long timeSinceLastReconnect = currentTime - lastReconnectTime;
+        long remainingSeconds = connection.reconnectCooldownSecondsLeft(currentTime);
 
-        if (timeSinceLastReconnect < RECONNECT_COOLDOWN_MS) {
-            long remainingSeconds = (RECONNECT_COOLDOWN_MS - timeSinceLastReconnect) / 1000 + 1;
+        if (remainingSeconds > 0) {
             log.info("Reconnect cooldown active - " + remainingSeconds + " seconds remaining");
             SnackbarHelper.showInfo(this, "Please wait " + remainingSeconds + " second(s) before reconnecting again");
             return;
         }
 
         // Update last reconnect time
-        lastReconnectTime = currentTime;
+        connection.markReconnectAttempt(currentTime);
 
         String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
         log.info("Attempting to reconnect - Last adapter type: " + lastAdapterType);
 
-        if (lastAdapterType == null) {
+        String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
+        String networkIp = prefs.getString("DEVICE_ADDRESS", null);
+        MainConnectionState.ReconnectPlan plan =
+                MainConnectionState.planReconnect(lastAdapterType, btAddress, networkIp);
+
+        if (plan == MainConnectionState.ReconnectPlan.NO_ADAPTER) {
             log.warning("No last adapter type found in SharedPreferences");
             SnackbarHelper.showWarning(this, "No previous adapter connection found. Please select an adapter.");
             return;
         }
 
         // Set reconnecting flag to prevent infinite loop in onDisconnect()
-        isManuallyReconnecting = true;
+        connection.setManuallyReconnecting(true);
         log.info("Set isManuallyReconnecting = true");
 
         // Safety timeout - clear flag after 30 seconds if reconnect doesn't complete
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (isManuallyReconnecting) {
+            if (connection.isManuallyReconnecting()) {
                 log.warning("Manual reconnect timeout - clearing flag after 30 seconds");
-                isManuallyReconnecting = false;
+                connection.setManuallyReconnecting(false);
             }
         }, 30000);
 
@@ -2760,41 +2738,38 @@ public class MainActivity extends AppCompatActivity
         }
 
         try {
-            switch (lastAdapterType) {
-                case "BLUETOOTH":
-                    String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
-                    if (btAddress != null) {
-                        connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
-                    } else {
-                        isManuallyReconnecting = false;
-                        SnackbarHelper.showWarning(this, "No Bluetooth device address found. Please select an adapter.");
-                    }
+            switch (plan) {
+                case BLUETOOTH:
+                    connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
                     break;
 
-                case "NETWORK":
-                    String networkIp = prefs.getString("DEVICE_ADDRESS", null);
-                    int networkPort = prefs.getInt("DEVICE_PORT", 35000);
-                    if (networkIp != null) {
-                        connectNetworkDevice(networkIp, networkPort);
-                        SnackbarHelper.showInfo(this, "Reconnecting to network adapter...");
-                    } else {
-                        isManuallyReconnecting = false;
-                        SnackbarHelper.showWarning(this, "No network address found. Please select an adapter.");
-                    }
+                case BLUETOOTH_NO_ADDRESS:
+                    connection.setManuallyReconnecting(false);
+                    SnackbarHelper.showWarning(this, "No Bluetooth device address found. Please select an adapter.");
                     break;
 
-                case "USB":
-                    isManuallyReconnecting = false;
+                case NETWORK:
+                    connectNetworkDevice(networkIp, prefs.getInt("DEVICE_PORT", 35000));
+                    SnackbarHelper.showInfo(this, "Reconnecting to network adapter...");
+                    break;
+
+                case NETWORK_NO_ADDRESS:
+                    connection.setManuallyReconnecting(false);
+                    SnackbarHelper.showWarning(this, "No network address found. Please select an adapter.");
+                    break;
+
+                case USB_MANUAL:
+                    connection.setManuallyReconnecting(false);
                     SnackbarHelper.showWarning(this, "USB reconnection requires manual device selection. Please use 'Select Adapter'.");
                     break;
 
                 default:
-                    isManuallyReconnecting = false;
+                    connection.setManuallyReconnecting(false);
                     SnackbarHelper.showWarning(this, "Unknown adapter type. Please select an adapter.");
                     break;
             }
         } catch (Exception e) {
-            isManuallyReconnecting = false;
+            connection.setManuallyReconnecting(false);
             log.log(Level.WARNING, "Error reconnecting to adapter", e);
             SnackbarHelper.showError(this, "Failed to reconnect. Please select an adapter manually.");
         }
@@ -2939,20 +2914,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Get adapter name from preferences
-        String adapterName = "adapter";
-        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
-
-        if ("BLUETOOTH".equals(lastAdapterType)) {
-            String btDeviceName = prefs.getString("LAST_BT_DEVICE_NAME", null);
-            if (btDeviceName != null && !btDeviceName.isEmpty()) {
-                adapterName = btDeviceName;
-            }
-        } else if ("USB".equals(lastAdapterType)) {
-            String usbDeviceName = prefs.getString("LAST_USB_DEVICE_NAME", null);
-            if (usbDeviceName != null && !usbDeviceName.isEmpty()) {
-                adapterName = usbDeviceName;
-            }
-        }
+        String adapterName = lastAdapterDisplayName();
 
         // Reset countdown
         countdownSecondsRemaining = 5;
@@ -2974,6 +2936,16 @@ public class MainActivity extends AppCompatActivity
 
         // Start countdown
         startCountdownTimer();
+    }
+
+    /**
+     * Name of the last used adapter for the auto-reconnect countdown
+     */
+    private String lastAdapterDisplayName() {
+        return MainConnectionState.adapterDisplayName(
+                prefs.getString("LAST_ADAPTER_TYPE", null),
+                prefs.getString("LAST_BT_DEVICE_NAME", null),
+                prefs.getString("LAST_USB_DEVICE_NAME", null));
     }
 
     /**
@@ -3029,21 +3001,7 @@ public class MainActivity extends AppCompatActivity
                         countdownSecondsRemaining = secondsLeft;
 
                         if (countdownText != null) {
-                            String adapterName = "adapter";
-                            String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
-
-                            if ("BLUETOOTH".equals(lastAdapterType)) {
-                                String btDeviceName = prefs.getString("LAST_BT_DEVICE_NAME", null);
-                                if (btDeviceName != null && !btDeviceName.isEmpty()) {
-                                    adapterName = btDeviceName;
-                                }
-                            } else if ("USB".equals(lastAdapterType)) {
-                                String usbDeviceName = prefs.getString("LAST_USB_DEVICE_NAME", null);
-                                if (usbDeviceName != null && !usbDeviceName.isEmpty()) {
-                                    adapterName = usbDeviceName;
-                                }
-                            }
-
+                            String adapterName = lastAdapterDisplayName();
                             countdownText.setText(String.format("Auto-reconnecting to %s in %ds...", adapterName, secondsLeft));
                         }
                     }
@@ -3065,57 +3023,48 @@ public class MainActivity extends AppCompatActivity
      * Only runs once per app session (first onResume)
      */
     private void attemptAutoReconnectIfEnabled() {
-        // Only attempt once per session
-        if (hasAttemptedAutoReconnect) {
-            return;
-        }
-
-        // Check if auto-reconnect is enabled
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean autoReconnectEnabled = prefs.getBoolean("auto_reconnect_on_startup", false);
-
-        if (!autoReconnectEnabled) {
-            log.info("Auto-reconnect disabled");
-            hasAttemptedAutoReconnect = true;
-            return;
-        }
-
-        // Check if we have a last adapter to reconnect to
         String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
-        if (lastAdapterType == null) {
-            log.info("Auto-reconnect: No last adapter found");
-            hasAttemptedAutoReconnect = true;
-            return;
-        }
 
         // Check if we're already connected using BOTH mCommService AND ElmProt status
         // IMPORTANT: When MainActivity recreates, mCommService may be null even though
         // connection is still active. Check ElmProt status as fallback.
         boolean isCommServiceConnected = (mCommService != null && mCommService.getState() == CommService.STATE.CONNECTED);
-        boolean isElmConnected = (CommService.elm != null &&
-                                  (CommService.elm.getStatus() == ElmProt.STAT.CONNECTED ||
-                                   CommService.elm.getStatus() == ElmProt.STAT.ECU_DETECTED ||
-                                   CommService.elm.getStatus() == ElmProt.STAT.ECU_SELECTED));
+        ElmProt.STAT elmStatus = CommService.elm != null ? CommService.elm.getStatus() : null;
 
-        if (isCommServiceConnected || isElmConnected) {
-            log.info("Auto-reconnect: Already connected (CommService: " + isCommServiceConnected +
-                    ", ElmProt: " + isElmConnected + ", Status: " +
-                    (CommService.elm != null ? CommService.elm.getStatus() : "null") + ")");
-            hasAttemptedAutoReconnect = true;
-            return;
-        }
+        // Only runs once per session; every outcome but ALREADY_CHECKED is logged once
+        switch (connection.checkAutoReconnect(
+                prefs.getBoolean("auto_reconnect_on_startup", false),
+                lastAdapterType, isCommServiceConnected, elmStatus)) {
+            case ALREADY_CHECKED:
+                return;
 
-        // Check if we're in offline mode
-        if (getMode() != MODE.OFFLINE) {
-            log.info("Auto-reconnect: Not in offline mode");
-            hasAttemptedAutoReconnect = true;
-            return;
+            case DISABLED:
+                log.info("Auto-reconnect disabled");
+                return;
+
+            case NO_ADAPTER:
+                log.info("Auto-reconnect: No last adapter found");
+                return;
+
+            case ALREADY_CONNECTED:
+                log.info("Auto-reconnect: Already connected (CommService: " + isCommServiceConnected +
+                        ", ElmProt: " + MainConnectionState.isElmLinkUp(elmStatus) + ", Status: " +
+                        (elmStatus != null ? elmStatus : "null") + ")");
+                return;
+
+            case NOT_OFFLINE:
+                log.info("Auto-reconnect: Not in offline mode");
+                return;
+
+            case COUNTDOWN:
+            default:
+                break;
         }
 
         // All checks passed - show countdown bar and give user chance to cancel
         // Delay ensures UI is fully initialized before showing countdown
         log.info("Auto-reconnect: Showing countdown for " + lastAdapterType);
-        hasAttemptedAutoReconnect = true;
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             showAutoReconnectCountdown();
@@ -3219,14 +3168,7 @@ public class MainActivity extends AppCompatActivity
 
                 // Update status to show proper ECU state for fault codes view
                 // Preserve "ECU Selected" if user manually selected an ECU
-                if (ecuUserSelected) {
-                    // User manually selected ECU - always show "ECU Selected"
-                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
-                           ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
-                    // Auto-detected ECU - show actual state
-                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
-                }
+                showServiceStatus();
 
                 // Setup clear codes button within the MIL status card
                 View clearBtn = findViewById(R.id.clear_codes_button);
@@ -3264,14 +3206,7 @@ public class MainActivity extends AppCompatActivity
 
                 // Update status to show proper ECU state when returning to dashboard
                 // This ensures status is refreshed from "No Data" or other service-specific states
-                if (ecuUserSelected) {
-                    // User manually selected ECU - always show "ECU Selected"
-                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
-                           ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
-                    // Auto-detected ECU - show actual state
-                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
-                }
+                showServiceStatus();
                 // If disconnected/offline, the status will be handled by the mode-specific logic below
 
                 // Ensure footer is collapsed and overlay is hidden when returning to dashboard
@@ -3594,15 +3529,15 @@ public class MainActivity extends AppCompatActivity
         stopDemoService();
 
         // Clear manual reconnect flag if it was set
-        if (isManuallyReconnecting) {
+        if (connection.isManuallyReconnecting()) {
             log.info("Manual reconnect completed successfully - clearing flag");
-            isManuallyReconnecting = false;
+            connection.setManuallyReconnecting(false);
         }
 
         // Reset ECU selection state for new connection
-        ecuUserSelected = false;
+        connection.setEcuUserSelected(false);
 
-        mode = MODE.ONLINE;
+        connection.setMode(MODE.ONLINE);
         // handle further initialisations
         setMenuItemVisible(R.id.secure_connect_scan, false);
         setMenuItemVisible(R.id.disconnect, true);
@@ -3631,7 +3566,7 @@ public class MainActivity extends AppCompatActivity
         setOverlayState(ConnectionOverlayState.OFFLINE);
 
         // Don't clear vehicle data or set up dashboard during manual reconnect
-        if (isManuallyReconnecting) {
+        if (connection.isManuallyReconnecting()) {
             log.info("Skipping full disconnect handling - manual reconnect in progress");
             // Don't call setMode or anything else that might trigger another disconnect
             // The reconnect process will handle mode changes
@@ -3639,7 +3574,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         // CRITICAL: Prevent multiple concurrent disconnects
-        if (!isDisconnecting.compareAndSet(false, true)) {
+        if (!connection.beginDisconnect()) {
             log.info("Disconnect already in progress - skipping redundant call");
             return;
         }
@@ -3658,8 +3593,7 @@ public class MainActivity extends AppCompatActivity
         // handle further initialisations
         setMode(MODE.OFFLINE);
         // Reset ECU connection state
-        ecuConnectionState = ElmProt.STAT.UNDEFINED;
-        ecuUserSelected = false;
+        connection.resetEcu();
         // Return to main screen
         setObdService(ObdProt.OBD_SVC_NONE, null);
 
@@ -3670,7 +3604,7 @@ public class MainActivity extends AppCompatActivity
         // Reset the flag after a delay since stop() is now async
         // This ensures subsequent disconnects after 1 second will work
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            isDisconnecting.set(false);
+            connection.endDisconnect();
             log.info("Disconnect guard reset - ready for next disconnect");
         }, 1000);
     }
@@ -3792,12 +3726,7 @@ public class MainActivity extends AppCompatActivity
 
                             // Update status immediately after switching to READ_CODES
                             // Always preserve "ECU Selected" if user manually selected
-                            if (ecuUserSelected) {
-                                setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                            } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
-                                       ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
-                                setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
-                            }
+                            showServiceStatus();
 
                             // After another delay, check if codes were cleared successfully and restore service
                             new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -3835,12 +3764,7 @@ public class MainActivity extends AppCompatActivity
 
                                         // Update status to show proper state after clearing codes
                                         // Always preserve "ECU Selected" if user manually selected
-                                        if (ecuUserSelected) {
-                                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                                        } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
-                                                   ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
-                                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
-                                        }
+                                        showServiceStatus();
                                     }
                                 }, 500);
                             }, 2000);
@@ -3885,8 +3809,7 @@ public class MainActivity extends AppCompatActivity
                 }
                 setMode(MODE.OFFLINE);
                 // Reset ECU connection state
-                ecuConnectionState = ElmProt.STAT.UNDEFINED;
-                ecuUserSelected = false;
+                connection.resetEcu();
                 // Clear vehicle data
                 VehicleManager.getInstance().clearVehicle();
                 // Return to main screen

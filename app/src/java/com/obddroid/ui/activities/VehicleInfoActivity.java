@@ -721,7 +721,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
             writer.flush();
             writer.close();
-            ReportFileWriter.writeText(this, filename, "text/csv", writer.toString());
+            ReportFileWriter.writeText(this, filename, ReportFileWriter.MIME_CSV, writer.toString());
 
             showSnackbar("Saved to Documents/OBD-Droid/" + filename, SnackbarHelper.MessageType.SUCCESS);
         } catch (IOException e) {
@@ -741,7 +741,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(data);
 
-            ReportFileWriter.writeText(this, filename, "application/json", json);
+            ReportFileWriter.writeText(this, filename, ReportFileWriter.MIME_JSON, json);
 
             showSnackbar("Saved to Documents/OBD-Droid/" + filename, SnackbarHelper.MessageType.SUCCESS);
         } catch (IOException e) {

@@ -663,7 +663,7 @@ public class LiveDataActivity extends AppCompatActivity
 
             writer.flush();
             writer.close();
-            ReportFileWriter.writeText(this, filename, "text/csv", writer.toString());
+            ReportFileWriter.writeText(this, filename, ReportFileWriter.MIME_CSV, writer.toString());
 
             SnackbarHelper.showSuccess(this, "Saved to Documents/OBD-Droid/" + filename);
             log.info("Live data exported to CSV: " + filename);
@@ -706,7 +706,7 @@ public class LiveDataActivity extends AppCompatActivity
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(report);
 
-            ReportFileWriter.writeText(this, filename, "application/json", json);
+            ReportFileWriter.writeText(this, filename, ReportFileWriter.MIME_JSON, json);
 
             SnackbarHelper.showSuccess(this, "Saved to Documents/OBD-Droid/" + filename);
             log.info("Live data exported to JSON: " + filename);

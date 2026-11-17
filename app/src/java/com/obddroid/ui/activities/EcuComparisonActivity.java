@@ -1,12 +1,8 @@
 package com.obddroid.ui.activities;
 
 import android.app.Dialog;
-import android.content.ContentValues;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,12 +20,9 @@ import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.ecu.EcuInfo;
 import com.obddroid.ecu.EcuScan;
 import com.obddroid.services.VehicleManager;
+import com.obddroid.utils.ReportFileWriter;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -245,49 +238,11 @@ public class EcuComparisonActivity extends AppCompatActivity {
             String timestamp = sdf.format(new Date());
             String filename = vinSuffix + "-ecu_comparison-" + timestamp + ".csv";
 
-            // Use MediaStore for Android 10+ to save to Documents/OBD-Droid
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Android 10+ - Use MediaStore API
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
+            ReportFileWriter.Result saved = ReportFileWriter.export(this, filename,
+                ReportFileWriter.MIME_CSV, this::writeComparisonCSV);
 
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri != null) {
-                    OutputStream outputStream = getContentResolver().openOutputStream(uri);
-                    OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-
-                    writeComparisonCSV(writer);
-
-                    writer.flush();
-                    writer.close();
-                    outputStream.close();
-
-                    log.info("Exported ECU comparison via MediaStore to: Documents/OBD-Droid/" + filename);
-                    showSnackbar("Exported comparison to:\nDocuments/OBD-Droid/" + filename);
-                } else {
-                    throw new IOException("Failed to create file in Documents");
-                }
-            } else {
-                // Android 9 and below - Use legacy file system
-                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBD-Droid");
-                if (!obdroidDir.exists()) {
-                    obdroidDir.mkdirs();
-                }
-
-                File csvFile = new File(obdroidDir, filename);
-                FileWriter writer = new FileWriter(csvFile);
-
-                writeComparisonCSV(writer);
-
-                writer.flush();
-                writer.close();
-
-                log.info("Exported ECU comparison to: " + csvFile.getAbsolutePath());
-                showSnackbar("Exported comparison to:\nDocuments/OBD-Droid/" + csvFile.getName());
-            }
+            log.info("Exported ECU comparison to: " + saved.location());
+            showSnackbar("Exported comparison to:\n" + saved.displayPath());
 
         } catch (IOException e) {
             log.severe("Error exporting comparison CSV: " + e.getMessage());

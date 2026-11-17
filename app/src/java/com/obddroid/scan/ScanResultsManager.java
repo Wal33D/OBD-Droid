@@ -306,7 +306,7 @@ public class ScanResultsManager {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException | JSONException e) {
             Log.e(TAG, "Failed to read scan index", e);
         } finally {
             indexLoaded = true;
@@ -375,7 +375,7 @@ public class ScanResultsManager {
                 reportCache.put(entry.scanId, report);
             }
             return report;
-        } catch (Exception e) {
+        } catch (IOException | JSONException e) {
             Log.e(TAG, "Failed to load scan " + entry.scanId, e);
             return null;
         }

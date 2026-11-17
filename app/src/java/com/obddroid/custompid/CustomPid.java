@@ -245,7 +245,7 @@ public class CustomPid implements Serializable {
                 int exactYear = Integer.parseInt(vehicleYears.trim());
                 return year == exactYear;
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
             return true; // If parsing fails, accept any year
         }
     }

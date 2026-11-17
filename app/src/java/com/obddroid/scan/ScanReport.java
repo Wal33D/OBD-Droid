@@ -50,7 +50,7 @@ public final class ScanReport {
             metadata.put("totalDurationMs", totalDurationMs);
             metadata.put("success", success);
             metadata.put("stageCount", stageResults.size());
-        } catch (Exception e) {
+        } catch (JSONException e) {
             // Ignore metadata errors
         }
     }
@@ -168,7 +168,7 @@ public final class ScanReport {
             root.put("stages", stages);
 
             return root;
-        } catch (Exception e) {
+        } catch (JSONException e) {
             return new JSONObject();
         }
     }
@@ -185,7 +185,7 @@ public final class ScanReport {
         try {
             long timestamp = metadata.getLong("scanTimestamp");
             sb.append("Date: ").append(sdf.format(new Date(timestamp))).append("\n");
-        } catch (Exception e) {
+        } catch (JSONException e) {
             // Ignore
         }
 
@@ -203,7 +203,7 @@ public final class ScanReport {
                     .append(metadata.getString("make")).append(" ")
                     .append(metadata.getString("model")).append("\n");
             }
-        } catch (Exception e) {
+        } catch (JSONException e) {
             // Ignore
         }
 

@@ -12,6 +12,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.json.JSONException;
 
 /**
  * Shared execution context for all scan stages.
@@ -123,7 +124,7 @@ public final class ScanContext {
                 metadata.put("year", vehicleManager.getCurrentVehicleData().getModelYear());
             }
             metadata.put("sessionId", discoveryManager.getActiveSessionId());
-        } catch (Exception e) {
+        } catch (JSONException e) {
             // Ignore
         }
         return metadata;

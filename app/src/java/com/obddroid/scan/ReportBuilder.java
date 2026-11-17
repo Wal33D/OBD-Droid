@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import android.content.pm.PackageManager;
 
 /**
  * Builds comprehensive scan report artifacts (Markdown, JSON, zip bundle).
@@ -143,7 +144,7 @@ public final class ReportBuilder {
             }
 
             return base;
-        } catch (Exception e) {
+        } catch (JSONException e) {
             JSONObject fallback = new JSONObject();
             try {
                 fallback.put("stageId", record.stage.getId());
@@ -359,7 +360,7 @@ public final class ReportBuilder {
             return appContext.getPackageManager()
                 .getPackageInfo(appContext.getPackageName(), 0)
                 .versionName;
-        } catch (Exception e) {
+        } catch (PackageManager.NameNotFoundException e) {
             return "vUnknown";
         }
     }

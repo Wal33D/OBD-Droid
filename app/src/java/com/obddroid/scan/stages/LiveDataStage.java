@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 import java.util.Map;
 import java.util.logging.Logger;
+import org.json.JSONException;
 
 /**
  * Stage 2: Capture live data snapshot from Mode 01 PIDs
@@ -123,7 +124,7 @@ public final class LiveDataStage implements ScanStage {
 
                         pidsArray.put(pidObj);
                         capturedCount++;
-                    } catch (Exception e) {
+                    } catch (JSONException e) {
                         // Log the actual error so we can debug
                         log.warning("SCAN: Error serializing PID " + entry.getKey() + ": " + e.getMessage());
                         continue;

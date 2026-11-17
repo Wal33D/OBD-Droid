@@ -39,7 +39,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -98,7 +97,6 @@ import com.obddroid.features.copilot.data.CoPilotController;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.services.discovery.DiscoveryManager;
 import com.obddroid.R;
-import com.obddroid.utils.VehicleData;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -357,36 +355,18 @@ public class MainActivity extends AppCompatActivity
     private UnsupportedModeHelper unsupportedModeHelper;
 
     // === Auto-Reconnect Countdown UI ===
-    private View autoReconnectCountdownBar;
-    private ProgressBar countdownProgress;
-    private TextView countdownText;
-    private Handler countdownHandler;
-    private Runnable countdownRunnable;
-    private int countdownSecondsRemaining = 5;
-    private static final int COUNTDOWN_DURATION_MS = 5000; // 5 seconds
-    private static final int COUNTDOWN_UPDATE_INTERVAL_MS = 100; // Update every 100ms for smooth animation
+    private final AutoReconnectCountdown autoReconnectCountdown =
+            new AutoReconnectCountdown(this, log, this::lastAdapterDisplayName, this::reconnectToLastAdapter);
 
     // === Vehicle Info Footer ===
     private com.obddroid.ui.components.VehicleInfoFooter vehicleInfoFooter;
 
-    private enum ConnectionOverlayState {
-        OFFLINE,
-        CONNECTING,
-        DECODING,
-        FINALIZING,
-        READY,
-        FAILED
-    }
-
     // === Connection Loading Overlay ===
-    private View connectionLoadingOverlay;
-    private TextView connectionLoadingText;
-    private TextView connectionLoadingSubtext;
-    private VehicleManager.VehicleChangeListener vehicleInfoListener;
-    private static final long VEHICLE_INFO_TIMEOUT_MS = 15000L;
-    private final Handler connectionOverlayHandler = new Handler(Looper.getMainLooper());
-    private Runnable vehicleInfoTimeoutRunnable;
-    private ConnectionOverlayState overlayState = ConnectionOverlayState.OFFLINE;
+    private final ConnectionOverlayController connectionOverlay = new ConnectionOverlayController(
+            this,
+            connection,
+            () -> vehicleInfoFooter != null && vehicleInfoFooter.hasVehicleData(),
+            log);
 
     ElmProt.STAT getEcuConnectionState() {
         return connection.getEcuConnectionState();
@@ -437,7 +417,7 @@ public class MainActivity extends AppCompatActivity
                                 if (connection.getMode() != MODE.ONLINE)
                                 {
                                     log.info("New connection detected - initializing");
-                                    setOverlayState(ConnectionOverlayState.DECODING);
+                                    connectionOverlay.setState(ConnectionOverlayController.State.DECODING);
                                     onConnect();
                                 }
                                 else
@@ -448,12 +428,12 @@ public class MainActivity extends AppCompatActivity
 
                             case CONNECTING:
                                 setStatus(R.string.title_connecting);
-                                setOverlayState(ConnectionOverlayState.CONNECTING);
+                                connectionOverlay.setState(ConnectionOverlayController.State.CONNECTING);
                                 break;
 
                             default:
                                 onDisconnect();
-                                setOverlayState(ConnectionOverlayState.OFFLINE);
+                                connectionOverlay.setState(ConnectionOverlayController.State.OFFLINE);
                                 break;
                         }
                         break;
@@ -845,7 +825,7 @@ public class MainActivity extends AppCompatActivity
         setupFooterOverlay();
 
         // Initialize auto-reconnect countdown bar
-        initializeCountdownBar();
+        autoReconnectCountdown.bind();
 
         // Set up dashboard cards and related UI components
         DashboardUiHelper.setupDashboardCards(this);
@@ -1161,15 +1141,7 @@ public class MainActivity extends AppCompatActivity
             remoteTelemetryUiCoordinator.release();
         }
 
-        cancelVehicleInfoTimeout();
-
-        if (vehicleInfoListener != null) {
-            VehicleManager vehicleManager = VehicleManager.getInstance();
-            if (vehicleManager != null) {
-                vehicleManager.removeListener(vehicleInfoListener);
-            }
-            vehicleInfoListener = null;
-        }
+        connectionOverlay.release();
 
         DiscoveryManager.getInstance().shutdown();
 
@@ -2680,70 +2652,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Initialize the auto-reconnect countdown bar and its click handlers
-     */
-    private void initializeCountdownBar() {
-        autoReconnectCountdownBar = findViewById(R.id.auto_reconnect_countdown_bar);
-        if (autoReconnectCountdownBar == null) {
-            log.warning("Countdown bar not found in layout");
-            return;
-        }
-
-        // Find child views
-        countdownProgress = autoReconnectCountdownBar.findViewById(R.id.countdown_progress);
-        countdownText = autoReconnectCountdownBar.findViewById(R.id.countdown_text);
-        View cancelBtn = autoReconnectCountdownBar.findViewById(R.id.countdown_cancel_btn);
-
-        // Initialize handler
-        countdownHandler = new Handler(Looper.getMainLooper());
-
-        // Set up click handlers
-        if (cancelBtn != null) {
-            cancelBtn.setOnClickListener(v -> cancelAutoReconnect());
-        }
-
-        // Clicking anywhere on the bar also cancels
-        autoReconnectCountdownBar.setOnClickListener(v -> cancelAutoReconnect());
-
-        log.info("Auto-reconnect countdown bar initialized");
-    }
-
-    /**
-     * Show the auto-reconnect countdown bar and start the countdown
-     */
-    private void showAutoReconnectCountdown() {
-        if (autoReconnectCountdownBar == null) {
-            log.warning("Countdown bar not initialized, falling back to direct reconnect");
-            reconnectToLastAdapter();
-            return;
-        }
-
-        // Get adapter name from preferences
-        String adapterName = lastAdapterDisplayName();
-
-        // Reset countdown
-        countdownSecondsRemaining = 5;
-
-        // Update initial text
-        if (countdownText != null) {
-            countdownText.setText(String.format("Auto-reconnecting to %s in %ds...", adapterName, countdownSecondsRemaining));
-        }
-
-        // Reset progress
-        if (countdownProgress != null) {
-            countdownProgress.setProgress(0);
-        }
-
-        // Show the bar
-        autoReconnectCountdownBar.setVisibility(View.VISIBLE);
-
-        log.info("Showing auto-reconnect countdown for adapter: " + adapterName);
-
-        // Start countdown
-        startCountdownTimer();
-    }
-
-    /**
      * Name of the last used adapter for the auto-reconnect countdown
      */
     private String lastAdapterDisplayName() {
@@ -2751,76 +2659,6 @@ public class MainActivity extends AppCompatActivity
                 prefs.getString("LAST_ADAPTER_TYPE", null),
                 prefs.getString("LAST_BT_DEVICE_NAME", null),
                 prefs.getString("LAST_USB_DEVICE_NAME", null));
-    }
-
-    /**
-     * Cancel the auto-reconnect countdown and hide the bar
-     */
-    private void cancelAutoReconnect() {
-        log.info("Auto-reconnect cancelled by user");
-
-        // Cancel the countdown timer
-        if (countdownHandler != null && countdownRunnable != null) {
-            countdownHandler.removeCallbacks(countdownRunnable);
-        }
-
-        // Hide the bar
-        if (autoReconnectCountdownBar != null) {
-            autoReconnectCountdownBar.setVisibility(View.GONE);
-        }
-
-        // Show feedback to user
-        SnackbarHelper.showInfo(this, "Auto-reconnect cancelled");
-    }
-
-    /**
-     * Start the countdown timer with smooth progress animation
-     */
-    private void startCountdownTimer() {
-        final long startTime = System.currentTimeMillis();
-        final long endTime = startTime + COUNTDOWN_DURATION_MS;
-
-        countdownRunnable = new Runnable() {
-            @Override
-            public void run() {
-                long now = System.currentTimeMillis();
-                long remaining = endTime - now;
-
-                if (remaining <= 0) {
-                    // Countdown complete - trigger reconnect
-                    if (autoReconnectCountdownBar != null) {
-                        autoReconnectCountdownBar.setVisibility(View.GONE);
-                    }
-                    log.info("Auto-reconnect countdown complete, initiating connection");
-                    reconnectToLastAdapter();
-                } else {
-                    // Update progress bar
-                    int progress = (int) (COUNTDOWN_DURATION_MS - remaining);
-                    if (countdownProgress != null) {
-                        countdownProgress.setProgress(progress);
-                    }
-
-                    // Update text countdown
-                    int secondsLeft = (int) Math.ceil(remaining / 1000.0);
-                    if (secondsLeft != countdownSecondsRemaining) {
-                        countdownSecondsRemaining = secondsLeft;
-
-                        if (countdownText != null) {
-                            String adapterName = lastAdapterDisplayName();
-                            countdownText.setText(String.format("Auto-reconnecting to %s in %ds...", adapterName, secondsLeft));
-                        }
-                    }
-
-                    // Schedule next update
-                    if (countdownHandler != null) {
-                        countdownHandler.postDelayed(this, COUNTDOWN_UPDATE_INTERVAL_MS);
-                    }
-                }
-            }
-        };
-
-        // Start the countdown
-        countdownHandler.post(countdownRunnable);
     }
 
     /**
@@ -2872,7 +2710,7 @@ public class MainActivity extends AppCompatActivity
         log.info("Auto-reconnect: Showing countdown for " + lastAdapterType);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            showAutoReconnectCountdown();
+            autoReconnectCountdown.show();
         }, 1000); // 1 second delay to ensure UI is ready
     }
 
@@ -3045,183 +2883,14 @@ public class MainActivity extends AppCompatActivity
 
         if (vehicleInfoFooter != null && overlay != null) {
             vehicleInfoFooter.setOverlayView(overlay);
-            vehicleInfoFooter.setVehicleInfoReadyListener(() -> {
-                if (overlayState == ConnectionOverlayState.DECODING ||
-                    overlayState == ConnectionOverlayState.FINALIZING) {
-                    setOverlayState(ConnectionOverlayState.READY);
-                }
-            });
+            vehicleInfoFooter.setVehicleInfoReadyListener(connectionOverlay::onFooterVehicleInfoReady);
             log.info("Footer overlay wired up successfully");
         } else {
             log.warning("Could not find footer or overlay view");
         }
 
         // Setup connection loading overlay
-        setupConnectionLoadingOverlay();
-    }
-
-    private void cancelVehicleInfoTimeout() {
-        if (vehicleInfoTimeoutRunnable != null) {
-            connectionOverlayHandler.removeCallbacks(vehicleInfoTimeoutRunnable);
-            vehicleInfoTimeoutRunnable = null;
-        }
-    }
-
-    private void startVehicleInfoTimeout() {
-        cancelVehicleInfoTimeout();
-        vehicleInfoTimeoutRunnable = () -> {
-            vehicleInfoTimeoutRunnable = null;
-            if (overlayState == ConnectionOverlayState.DECODING ||
-                overlayState == ConnectionOverlayState.FINALIZING) {
-                log.warning("Vehicle info overlay timed out while waiting for data");
-                setOverlayState(ConnectionOverlayState.FAILED);
-            }
-        };
-        connectionOverlayHandler.postDelayed(vehicleInfoTimeoutRunnable, VEHICLE_INFO_TIMEOUT_MS);
-    }
-
-    private void setOverlayState(ConnectionOverlayState newState) {
-        setOverlayState(newState, null, null);
-    }
-
-    private void setOverlayState(ConnectionOverlayState newState, String overrideTitle, String overrideSubtitle) {
-        overlayState = newState;
-
-        switch (newState) {
-            case OFFLINE:
-                cancelVehicleInfoTimeout();
-                if (getMode() == MODE.DEMO) {
-                    hideConnectionLoadingOverlay();
-                } else {
-                    showConnectionLoadingOverlay(
-                            overrideTitle != null ? overrideTitle : getString(R.string.connection_required_title),
-                            overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_required_message));
-                }
-                break;
-
-            case CONNECTING:
-                cancelVehicleInfoTimeout();
-                showConnectionLoadingOverlay(
-                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_connecting_title),
-                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_connecting_subtitle));
-                break;
-
-            case DECODING:
-                showConnectionLoadingOverlay(
-                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_decoding_title),
-                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_decoding_subtitle));
-                startVehicleInfoTimeout();
-                break;
-
-            case FINALIZING:
-                showConnectionLoadingOverlay(
-                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_finalizing_title),
-                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_finalizing_subtitle));
-                startVehicleInfoTimeout();
-                break;
-
-            case FAILED:
-                cancelVehicleInfoTimeout();
-                showConnectionLoadingOverlay(
-                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_failed_title),
-                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_failed_subtitle));
-                break;
-
-            case READY:
-                cancelVehicleInfoTimeout();
-                hideConnectionLoadingOverlay();
-                break;
-        }
-    }
-
-    /**
-     * Setup connection loading overlay for blocking UI during connection
-     */
-    private void setupConnectionLoadingOverlay() {
-        connectionLoadingOverlay = findViewById(R.id.connection_loading_overlay);
-        connectionLoadingText = findViewById(R.id.connection_loading_text);
-        connectionLoadingSubtext = findViewById(R.id.connection_loading_subtext);
-
-        if (connectionLoadingOverlay != null) {
-            log.info("Connection loading overlay initialized");
-        } else {
-            log.warning("Could not find connection loading overlay");
-        }
-
-        if (vehicleInfoListener == null) {
-            vehicleInfoListener = new VehicleManager.SimpleVehicleChangeListener() {
-                @Override
-                public void onDecodingStarted() {
-                    setOverlayState(ConnectionOverlayState.DECODING);
-                }
-
-                @Override
-                public void onVehicleDecoded(VehicleData vehicleData) {
-                    if (vehicleInfoFooter != null && vehicleInfoFooter.hasVehicleData()) {
-                        setOverlayState(ConnectionOverlayState.READY);
-                    } else {
-                        setOverlayState(ConnectionOverlayState.FINALIZING);
-                    }
-                }
-
-                @Override
-                public void onDecodingError(String error) {
-                    setOverlayState(ConnectionOverlayState.FAILED);
-                }
-
-                @Override
-                public void onVINRetrievalFailed() {
-                    setOverlayState(ConnectionOverlayState.FAILED);
-                }
-
-                @Override
-                public void onVehicleDisconnected() {
-                    setOverlayState(ConnectionOverlayState.OFFLINE);
-                }
-            };
-
-            VehicleManager vehicleManager = VehicleManager.getInstance();
-            if (vehicleManager != null) {
-                vehicleManager.addListener(vehicleInfoListener);
-            } else {
-                log.warning("VehicleManager instance not available when setting up loading overlay listener");
-            }
-        }
-
-        setOverlayState(ConnectionOverlayState.OFFLINE);
-    }
-
-    /**
-     * Show the connection loading overlay
-     * @param text Main text to display
-     * @param subtext Subtext to display (optional)
-     */
-    private void showConnectionLoadingOverlay(String text, String subtext) {
-        runOnUiThread(() -> {
-            if (connectionLoadingOverlay != null) {
-                if (connectionLoadingText != null && text != null) {
-                    connectionLoadingText.setText(text);
-                }
-                if (connectionLoadingSubtext != null) {
-                    connectionLoadingSubtext.setText(subtext != null ? subtext : "Please wait");
-                }
-                connectionLoadingOverlay.setVisibility(View.VISIBLE);
-                log.info("Showing connection loading overlay: " + text);
-            }
-        });
-    }
-
-    /**
-     * Hide the connection loading overlay
-     */
-    private void hideConnectionLoadingOverlay() {
-        cancelVehicleInfoTimeout();
-        runOnUiThread(() -> {
-            if (connectionLoadingOverlay != null) {
-                connectionLoadingOverlay.setVisibility(View.GONE);
-                log.info("Hiding connection loading overlay");
-            }
-        });
+        connectionOverlay.bindViews();
     }
 
     /**
@@ -3367,7 +3036,7 @@ public class MainActivity extends AppCompatActivity
      */
     private void onDisconnect()
     {
-        setOverlayState(ConnectionOverlayState.OFFLINE);
+        connectionOverlay.setState(ConnectionOverlayController.State.OFFLINE);
 
         // Don't clear vehicle data or set up dashboard during manual reconnect
         if (connection.isManuallyReconnecting()) {

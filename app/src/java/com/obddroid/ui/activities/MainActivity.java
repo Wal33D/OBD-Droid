@@ -15,7 +15,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -219,10 +218,6 @@ public class MainActivity extends AppCompatActivity
      * Name of the connected BT device
      */
     private static String mConnectedDeviceName = null;
-    /**
-     * menu object
-     */
-    private static Menu menu;
 
     private CsvLoggingUiCoordinator csvLoggingUiCoordinator;
     private GpsTelemetryManager gpsTelemetryManager;
@@ -318,6 +313,50 @@ public class MainActivity extends AppCompatActivity
      * operating mode, ECU state and reconnect/disconnect guards
      */
     private final MainConnectionState connection = new MainConnectionState();
+    /**
+     * options menu: connect/disconnect icon, item actions
+     */
+    private final MainMenuController menuController = new MainMenuController(
+            new MainMenuController.Host() {
+                @Override
+                public void goHome() {
+                    setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
+                }
+
+                @Override
+                public void selectAdapter() {
+                    restartWithAdapterSelection();
+                }
+
+                @Override
+                public void confirmDisconnect() {
+                    // Show styled confirmation dialog before disconnecting
+                    showDisconnectConfirmDialog();
+                }
+
+                @Override
+                public void openSettings() {
+                    // Launch the Settings Activity
+                    Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
+                    launchActivityForResult(settingsIntent, REQUEST_SETTINGS);
+                }
+
+                @Override
+                public void showHelp() {
+                    showInfoDialog();
+                }
+
+                @Override
+                public void startService(int obdService, CharSequence title) {
+                    setObdService(obdService, title);
+                }
+
+                @Override
+                public void warnEcuNotReady() {
+                    SnackbarHelper.showWarning(MainActivity.this, "Please wait for ECU connection to complete");
+                }
+            },
+            connection);
 
     // === Connection Cycle Detection for Unsupported Modes ===
     private UnsupportedModeHelper unsupportedModeHelper;
@@ -962,8 +1001,7 @@ public class MainActivity extends AppCompatActivity
                     {
                         log.info("Syncing UI to ONLINE mode (already connected - no re-init)");
                         connection.setMode(MODE.ONLINE);
-                        setMenuItemVisible(R.id.secure_connect_scan, false);
-                        setMenuItemVisible(R.id.disconnect, true);
+                        menuController.showConnected(true);
                         updateServiceMenuItems(true);
                         setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                     }
@@ -1236,7 +1274,7 @@ public class MainActivity extends AppCompatActivity
     {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        MainActivity.menu = menu;
+        menuController.attach(menu);
         // update menu item status for current conversion
         setConversionSystem(EcuDataItem.cnvSystem);
         return true;
@@ -1366,23 +1404,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
         // Update menu items based on current connection state
         // This ensures the correct button (connect/disconnect) is shown when returning from other activities
-        switch (connection.getMode()) {
-            case ONLINE:
-            case DEMO:
-            case FILE:
-                // Connected - show green disconnect button
-                setMenuItemVisible(R.id.secure_connect_scan, false);
-                setMenuItemVisible(R.id.disconnect, true);
-                break;
-
-            case OFFLINE:
-            default:
-                // Disconnected - show white connect button
-                setMenuItemVisible(R.id.disconnect, false);
-                setMenuItemVisible(R.id.secure_connect_scan, true);
-                break;
-        }
-
+        menuController.onPrepare();
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -1392,116 +1414,63 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        switch (item.getItemId())
+        if (menuController.onItemSelected(item.getItemId(), item.getTitle()))
         {
-            case android.R.id.home:
-                // Home button clicked - return to dashboard
-                setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
-                return true;
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-            case R.id.secure_connect_scan:
-                // ENHANCED: Force clear any stuck connection state and go to adapter selection
-                // This provides an escape mechanism if the user is stuck in "Connecting..." state
-                log.info("Connect button clicked - forcing disconnect and adapter selection");
+    /**
+     * Connect icon: force clear any stuck connection state and go to adapter selection.
+     * This provides an escape mechanism if the user is stuck in "Connecting..." state
+     */
+    private void restartWithAdapterSelection()
+    {
+        log.info("Connect button clicked - forcing disconnect and adapter selection");
 
-                // End any active sessions FIRST to prevent null pointer exceptions
-                try {
-                    CoPilotController.getInstance().endSession("user initiated reconnection");
-                    DiscoveryManager.getInstance().endSession("User initiated reconnection");
-                } catch (Exception e) {
-                    log.warning("Error ending sessions: " + e.getMessage());
-                }
-
-                // Stop any ongoing connection attempts
-                if (mCommService != null) {
-                    log.info("Stopping existing communication service");
-                    try {
-                        mCommService.stop();
-                    } catch (Exception e) {
-                        log.warning("Error stopping CommService: " + e.getMessage());
-                    }
-                }
-
-                // Reset connection state
-                connection.resetEcu();
-
-                // Clear vehicle data (after ending sessions)
-                try {
-                    VehicleManager.getInstance().clearVehicle();
-                } catch (Exception e) {
-                    log.warning("Error clearing vehicle data: " + e.getMessage());
-                }
-
-                // Force mode to OFFLINE first to ensure clean state
-                connection.setMode(MODE.OFFLINE);
-
-                // Update UI to show disconnected state
-                setMenuItemVisible(R.id.disconnect, false);
-                setMenuItemVisible(R.id.secure_connect_scan, true);
-                updateServiceMenuItems(false);
-
-                // Now launch adapter selection (always, regardless of current state)
-                log.info("Launching adapter selection activity");
-                Intent adapterIntent = new Intent(this, UnifiedAdapterSelectionActivity.class);
-                launchActivityForResult(adapterIntent, REQUEST_CONNECT_UNIFIED);
-
-                // Update status
-                setStatus(getString(R.string.status_online));
-
-                return true;
-
-
-            case R.id.disconnect:
-                // Show styled confirmation dialog before disconnecting
-                showDisconnectConfirmDialog();
-                return true;
-
-            case R.id.settings:
-                // Launch the Settings Activity
-                Intent settingsIntent = new Intent(this, SettingsActivity.class);
-                launchActivityForResult(settingsIntent, REQUEST_SETTINGS);
-                return true;
-
-            case R.id.service_home:
-                // Always return to dashboard/home screen
-                setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
-                return true;
-
-            case R.id.service_none:
-                setObdService(ObdProt.OBD_SVC_NONE, item.getTitle());
-                return true;
-
-            case R.id.service_data:
-                if (connection.isEcuReady()) {
-                    setObdService(ObdProt.OBD_SVC_DATA, item.getTitle());
-                } else {
-                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
-                }
-                return true;
-
-            case R.id.service_testcontrol:
-                if (connection.isEcuReady()) {
-                    setObdService(ObdProt.OBD_SVC_CTRL_MODE, item.getTitle());
-                } else {
-                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
-                }
-                return true;
-
-            case R.id.service_codes:
-                if (connection.isEcuReady()) {
-                    setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
-                } else {
-                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
-                }
-                return true;
-
-            case R.id.action_info:
-                showInfoDialog();
-                return true;
-
+        // End any active sessions FIRST to prevent null pointer exceptions
+        try {
+            CoPilotController.getInstance().endSession("user initiated reconnection");
+            DiscoveryManager.getInstance().endSession("User initiated reconnection");
+        } catch (Exception e) {
+            log.warning("Error ending sessions: " + e.getMessage());
         }
 
-        return super.onOptionsItemSelected(item);
+        // Stop any ongoing connection attempts
+        if (mCommService != null) {
+            log.info("Stopping existing communication service");
+            try {
+                mCommService.stop();
+            } catch (Exception e) {
+                log.warning("Error stopping CommService: " + e.getMessage());
+            }
+        }
+
+        // Reset connection state
+        connection.resetEcu();
+
+        // Clear vehicle data (after ending sessions)
+        try {
+            VehicleManager.getInstance().clearVehicle();
+        } catch (Exception e) {
+            log.warning("Error clearing vehicle data: " + e.getMessage());
+        }
+
+        // Force mode to OFFLINE first to ensure clean state
+        connection.setMode(MODE.OFFLINE);
+
+        // Update UI to show disconnected state
+        menuController.showConnected(false);
+        updateServiceMenuItems(false);
+
+        // Now launch adapter selection (always, regardless of current state)
+        log.info("Launching adapter selection activity");
+        Intent adapterIntent = new Intent(this, UnifiedAdapterSelectionActivity.class);
+        launchActivityForResult(adapterIntent, REQUEST_CONNECT_UNIFIED);
+
+        // Update status
+        setStatus(getString(R.string.status_online));
     }
 
     @Override
@@ -1527,23 +1496,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item)
     {
-        switch (item.getItemId())
+        DATA_VIEW_MODE viewMode = MainMenuController.viewModeForAction(item.getItemId());
+        if (viewMode != null)
         {
-            case R.id.chart_selected:
-                setDataViewMode(DATA_VIEW_MODE.CHART);
-                return true;
-
-            case R.id.hud_selected:
-                setDataViewMode(DATA_VIEW_MODE.HEADUP);
-                return true;
-
-            case R.id.dashboard_selected:
-                setDataViewMode(DATA_VIEW_MODE.DASHBOARD);
-                return true;
-
-            case R.id.filter_selected:
-                setDataViewMode(DATA_VIEW_MODE.FILTERED);
-                return true;
+            setDataViewMode(viewMode);
+            return true;
         }
         return false;
     }
@@ -2236,52 +2193,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Set enabled state for a specified menu item
-     * * this includes shading disabled items to visualize state
-     *
-     * @param id      ID of menu item
-     * @param enabled flag if to be enabled/disabled
-     */
-    private void setMenuItemEnable(int id, boolean enabled)
-    {
-        if (menu != null)
-        {
-            MenuItem item = menu.findItem(id);
-            if (item != null)
-            {
-                item.setEnabled(enabled);
-
-                // if menu item has icon ...
-                Drawable icon = item.getIcon();
-                if (icon != null)
-                {
-                    // set it's shading
-                    icon.setAlpha(enabled ? 255 : 127);
-                }
-            }
-        }
-    }
-
-    /**
-     * Set enabled state for a specified menu item
-     * * this includes shading disabled items to visualize state
-     *
-     * @param id      ID of menu item
-     * @param enabled flag if to be visible/invisible
-     */
-    private void setMenuItemVisible(int id, boolean enabled)
-    {
-        if (menu != null)
-        {
-            MenuItem item = menu.findItem(id);
-            if (item != null)
-            {
-                item.setVisible(enabled);
-            }
-        }
-    }
-
-    /**
      * start/stop the autmatic toolbar hider
      */
     private void setAutoHider(boolean active)
@@ -2399,8 +2310,7 @@ public class MainActivity extends AppCompatActivity
             {
                 case OFFLINE:
                     // update menu item states
-                    setMenuItemVisible(R.id.disconnect, false);
-                    setMenuItemVisible(R.id.secure_connect_scan, true);
+                    menuController.showConnected(false);
                     updateServiceMenuItems(false);
                     break;
 
@@ -2551,8 +2461,7 @@ public class MainActivity extends AppCompatActivity
             // No snackbar - consistent with real device connection
 
             // Show disconnect button (green) since we're "connected" to demo
-            setMenuItemVisible(R.id.secure_connect_scan, false);
-            setMenuItemVisible(R.id.disconnect, true);
+            menuController.showConnected(true);
 
             updateServiceMenuItems(true);
             /* The Thread object for processing the demo mode loop */
@@ -3539,8 +3448,7 @@ public class MainActivity extends AppCompatActivity
 
         connection.setMode(MODE.ONLINE);
         // handle further initialisations
-        setMenuItemVisible(R.id.secure_connect_scan, false);
-        setMenuItemVisible(R.id.disconnect, true);
+        menuController.showConnected(true);
 
         updateServiceMenuItems(true);
         // display connection status

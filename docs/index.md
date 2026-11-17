@@ -40,6 +40,8 @@ Play Store launch planning and go-to-market strategy:
 
 - **[launch-plan.md](./launch-plan.md)** – Play Store launch workflow and go-to-market checklist
 - **[play-store-requirments.md](./play-store-requirments.md)** – Play Store submission requirements and checklist
+- **[privacy-policy.md](./privacy-policy.md)** – App privacy policy (Play listing and website)
+- **[website/](./website/README.md)** – Product website: domain shortlist and site plan
 
 ---
 

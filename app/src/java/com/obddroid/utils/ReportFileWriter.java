@@ -19,11 +19,11 @@ import java.io.OutputStreamWriter;
  * Helper for exporting diagnostic reports to user-visible storage.
  *
  * Handles MediaStore operations for Android 10+ and legacy file I/O for older devices,
- * ensuring all reports end up under Documents/OBDroid.
+ * ensuring all reports end up under Documents/OBD-Droid.
  */
 public final class ReportFileWriter {
 
-    private static final String EXPORT_DIRECTORY = Environment.DIRECTORY_DOCUMENTS + "/OBDroid";
+    private static final String EXPORT_DIRECTORY = Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid";
 
     private ReportFileWriter() {
         // Utility class
@@ -100,7 +100,7 @@ public final class ReportFileWriter {
                                       String filename,
                                       WriterCallback callback) throws IOException {
         File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        File obdroidDir = new File(documentsDir, "OBDroid");
+        File obdroidDir = new File(documentsDir, "OBD-Droid");
         if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
             throw new IOException("Unable to create export directory");
         }

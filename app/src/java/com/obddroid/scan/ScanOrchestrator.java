@@ -10,7 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.os.Binder;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;

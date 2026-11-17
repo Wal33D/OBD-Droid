@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--  OBDroid -->
-    <string name="app_name" translatable="false">OBDroid</string>
+    <!--  OBD-Droid -->
+    <string name="app_name" translatable="false">OBD-Droid</string>
     <string name="app_description">OBD vehicle diagnostics app for ELM327 Bluetooth adapter</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

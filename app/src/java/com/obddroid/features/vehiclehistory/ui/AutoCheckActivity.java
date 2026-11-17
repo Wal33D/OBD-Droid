@@ -1512,7 +1512,7 @@ public class AutoCheckActivity extends AppCompatActivity {
     }
 
     /**
-     * Save a copy of the PDF report to Documents/OBDroid
+     * Save a copy of the PDF report to Documents/OBD-Droid
      */
     private void savePDFCopy() {
         if (currentReport == null) {
@@ -1543,7 +1543,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (savedUri == null) {
@@ -1566,7 +1566,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 outputStream.close();
             } else {
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
@@ -1613,7 +1613,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (savedUri == null) {
@@ -1627,7 +1627,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 writer = new OutputStreamWriter(outputStream);
             } else {
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
@@ -1784,7 +1784,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (savedUri == null) {
@@ -1798,7 +1798,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 writer = new OutputStreamWriter(outputStream);
             } else {
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
@@ -1856,7 +1856,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 startActivity(Intent.createChooser(shareIntent, "Open " + fileName + " with..."));
             }
         } catch (Exception e) {
-            SnackbarHelper.showSnackbar(this, "Saved to Documents/OBDroid", SnackbarHelper.MessageType.SUCCESS);
+            SnackbarHelper.showSnackbar(this, "Saved to Documents/OBD-Droid", SnackbarHelper.MessageType.SUCCESS);
         }
     }
 

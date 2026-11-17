@@ -16,7 +16,7 @@
 
     <!-- to keep Bluetooth measurement running even when screen is inactive -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Exports go through MediaStore (Documents/OBDroid) on Android 10+, which needs no storage permission.
+    <!-- Exports go through MediaStore (Documents/OBD-Droid) on Android 10+, which needs no storage permission.
          Android 9 and below still write the public Documents folder directly. -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"

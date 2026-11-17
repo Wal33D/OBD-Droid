@@ -326,13 +326,13 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
 
             String jsonString = root.toString(2);  // Pretty print with 2-space indent
 
-            // Use MediaStore for Android 10+ to save to Documents/OBDroid
+            // Use MediaStore for Android 10+ to save to Documents/OBD-Droid
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Android 10+ - Use MediaStore API
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (uri != null) {
@@ -343,8 +343,8 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
                     writer.close();
                     outputStream.close();
 
-                    log.info("Exported " + ecuList.size() + " ECUs via MediaStore to: Documents/OBDroid/" + filename);
-                    showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBDroid/" + filename,
+                    log.info("Exported " + ecuList.size() + " ECUs via MediaStore to: Documents/OBD-Droid/" + filename);
+                    showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBD-Droid/" + filename,
                         Snackbar.LENGTH_LONG);
                 } else {
                     throw new IOException("Failed to create file in Documents");
@@ -352,7 +352,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             } else {
                 // Android 9 and below - Use legacy file system
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists()) {
                     obdroidDir.mkdirs();
                 }
@@ -364,7 +364,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
                 writer.close();
 
                 log.info("Exported " + ecuList.size() + " ECUs to: " + jsonFile.getAbsolutePath());
-                showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBDroid/" + jsonFile.getName(),
+                showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBD-Droid/" + jsonFile.getName(),
                     Snackbar.LENGTH_LONG);
             }
 
@@ -541,13 +541,13 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             String timestamp = sdf.format(new Date());
             String filename = vinSuffix + "-ecu_modules-" + timestamp + ".csv";
 
-            // Use MediaStore for Android 10+ to save to Documents/OBDroid
+            // Use MediaStore for Android 10+ to save to Documents/OBD-Droid
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Android 10+ - Use MediaStore API
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (uri != null) {
@@ -570,8 +570,8 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
                     writer.close();
                     outputStream.close();
 
-                    log.info("Exported " + ecuList.size() + " ECUs via MediaStore to: Documents/OBDroid/" + filename);
-                    showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBDroid/" + filename,
+                    log.info("Exported " + ecuList.size() + " ECUs via MediaStore to: Documents/OBD-Droid/" + filename);
+                    showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBD-Droid/" + filename,
                         Snackbar.LENGTH_LONG);
                 } else {
                     throw new IOException("Failed to create file in Documents");
@@ -579,7 +579,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             } else {
                 // Android 9 and below - Use legacy file system
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists()) {
                     obdroidDir.mkdirs();
                 }
@@ -603,7 +603,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
                 writer.close();
 
                 log.info("Exported " + ecuList.size() + " ECUs to: " + csvFile.getAbsolutePath());
-                showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBDroid/" + csvFile.getName(),
+                showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBD-Droid/" + csvFile.getName(),
                     Snackbar.LENGTH_LONG);
             }
 

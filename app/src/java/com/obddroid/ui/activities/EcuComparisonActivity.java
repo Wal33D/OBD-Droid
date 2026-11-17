@@ -245,13 +245,13 @@ public class EcuComparisonActivity extends AppCompatActivity {
             String timestamp = sdf.format(new Date());
             String filename = vinSuffix + "-ecu_comparison-" + timestamp + ".csv";
 
-            // Use MediaStore for Android 10+ to save to Documents/OBDroid
+            // Use MediaStore for Android 10+ to save to Documents/OBD-Droid
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Android 10+ - Use MediaStore API
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (uri != null) {
@@ -264,15 +264,15 @@ public class EcuComparisonActivity extends AppCompatActivity {
                     writer.close();
                     outputStream.close();
 
-                    log.info("Exported ECU comparison via MediaStore to: Documents/OBDroid/" + filename);
-                    showSnackbar("Exported comparison to:\nDocuments/OBDroid/" + filename);
+                    log.info("Exported ECU comparison via MediaStore to: Documents/OBD-Droid/" + filename);
+                    showSnackbar("Exported comparison to:\nDocuments/OBD-Droid/" + filename);
                 } else {
                     throw new IOException("Failed to create file in Documents");
                 }
             } else {
                 // Android 9 and below - Use legacy file system
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists()) {
                     obdroidDir.mkdirs();
                 }
@@ -286,7 +286,7 @@ public class EcuComparisonActivity extends AppCompatActivity {
                 writer.close();
 
                 log.info("Exported ECU comparison to: " + csvFile.getAbsolutePath());
-                showSnackbar("Exported comparison to:\nDocuments/OBDroid/" + csvFile.getName());
+                showSnackbar("Exported comparison to:\nDocuments/OBD-Droid/" + csvFile.getName());
             }
 
         } catch (IOException e) {

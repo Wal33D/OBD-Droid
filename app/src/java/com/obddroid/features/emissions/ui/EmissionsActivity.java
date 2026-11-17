@@ -429,7 +429,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (uri == null) {
@@ -443,7 +443,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 writer = new OutputStreamWriter(outputStream);
             } else {
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory: " + obdroidDir.getAbsolutePath());
                 }
@@ -689,7 +689,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (uri == null) {
@@ -699,7 +699,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 outputStream = getContentResolver().openOutputStream(uri);
             } else {
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
@@ -802,7 +802,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBD-Droid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
                 if (uri == null) {
@@ -816,7 +816,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 writer = new OutputStreamWriter(outputStream);
             } else {
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
+                File obdroidDir = new File(documentsDir, "OBD-Droid");
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }

@@ -185,7 +185,7 @@ public class PermissionManager {
     public static void showBluetoothRationale(final Activity activity) {
         new AlertDialog.Builder(activity)
             .setTitle("Bluetooth Permission Required")
-            .setMessage("OBDroid needs Bluetooth access to connect to your OBD adapter and read vehicle data.")
+            .setMessage("OBD-Droid needs Bluetooth access to connect to your OBD adapter and read vehicle data.")
             .setPositiveButton("Grant Permission", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -203,7 +203,7 @@ public class PermissionManager {
     public static void showStorageRationale(final Activity activity) {
         new AlertDialog.Builder(activity)
             .setTitle("Storage Permission Required")
-            .setMessage("OBDroid needs storage access to save data logs, export CSV files, and capture screenshots.")
+            .setMessage("OBD-Droid needs storage access to save data logs, export CSV files, and capture screenshots.")
             .setPositiveButton("Grant Permission", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -221,7 +221,7 @@ public class PermissionManager {
     public static void showNotificationRationale(final Activity activity) {
         new AlertDialog.Builder(activity)
             .setTitle("Notification Permission")
-            .setMessage("OBDroid can show notifications for connection status and data logging progress.")
+            .setMessage("OBD-Droid can show notifications for connection status and data logging progress.")
             .setPositiveButton("Grant Permission", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {

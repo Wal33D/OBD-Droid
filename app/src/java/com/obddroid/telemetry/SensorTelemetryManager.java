@@ -215,7 +215,7 @@ public class SensorTelemetryManager implements SensorEventListener {
 
     private void ensureLiveDataPreferences() {
         // Add sensor fields to selected PIDs preference so they appear in Live Data
-        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(appContext);
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext);
         Set<String> selectedPids = prefs.getStringSet(com.obddroid.ui.activities.SettingsActivity.KEY_DATA_ITEMS, null);
 
         // Only update if user has a saved selection (if null/empty, adapter shows all by default)

@@ -44,7 +44,7 @@ public class MapTileHelper {
      * @param imageView ImageView to display the map
      */
     public static void loadMapTile(double latitude, double longitude, int zoom, ImageView imageView) {
-        Log.d(TAG, String.format("loadMapTile called with lat=%f, lon=%f, zoom=%d", latitude, longitude, zoom));
+        DebugLog.d(TAG, String.format("loadMapTile called with lat=%f, lon=%f, zoom=%d", latitude, longitude, zoom));
 
         executor.execute(() -> {
             try {
@@ -54,8 +54,8 @@ public class MapTileHelper {
 
                 // Build tile URL
                 String tileUrl = String.format("%s/%d/%d/%d.png", TILE_SERVER, zoom, tileX, tileY);
-                Log.d(TAG, "Downloading map tile from: " + tileUrl);
-                Log.d(TAG, String.format("Tile coordinates: X=%d, Y=%d", tileX, tileY));
+                DebugLog.d(TAG, "Downloading map tile from: " + tileUrl);
+                DebugLog.d(TAG, String.format("Tile coordinates: X=%d, Y=%d", tileX, tileY));
 
                 // Download tile
                 URL url = new URL(tileUrl);
@@ -66,7 +66,7 @@ public class MapTileHelper {
                 connection.connect();
 
                 int responseCode = connection.getResponseCode();
-                Log.d(TAG, "HTTP Response Code: " + responseCode);
+                DebugLog.d(TAG, "HTTP Response Code: " + responseCode);
 
                 if (responseCode == 200) {
                     InputStream input = connection.getInputStream();
@@ -74,14 +74,14 @@ public class MapTileHelper {
                     input.close();
 
                     if (tileBitmap != null) {
-                        Log.d(TAG, String.format("Bitmap loaded: %dx%d", tileBitmap.getWidth(), tileBitmap.getHeight()));
+                        DebugLog.d(TAG, String.format("Bitmap loaded: %dx%d", tileBitmap.getWidth(), tileBitmap.getHeight()));
                         // Add location marker to the center
                         Bitmap markedBitmap = addLocationMarker(tileBitmap);
 
                         // Update UI on main thread
                         mainHandler.post(() -> {
                             imageView.setImageBitmap(markedBitmap);
-                            Log.d(TAG, "Map tile set to ImageView successfully");
+                            DebugLog.d(TAG, "Map tile set to ImageView successfully");
                         });
                     } else {
                         Log.e(TAG, "Failed to decode bitmap from stream");
@@ -92,7 +92,6 @@ public class MapTileHelper {
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load map tile: " + e.getMessage(), e);
-                e.printStackTrace();
             }
         });
     }

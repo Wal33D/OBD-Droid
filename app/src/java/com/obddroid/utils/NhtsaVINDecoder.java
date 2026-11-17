@@ -47,12 +47,12 @@ public class NhtsaVINDecoder {
      */
     public VehicleData decode(String vin) {
         if (!isNetworkAvailable()) {
-            Log.d(TAG, "Network not available, cannot use NHTSA API");
+            DebugLog.d(TAG, "Network not available, cannot use NHTSA API");
             return null;
         }
 
         try {
-            Log.d(TAG, "Decoding VIN online: " + vin);
+            DebugLog.d(TAG, "Decoding VIN online: " + vin);
             String jsonResponse = fetchVinData(vin);
             return parseNhtsaResponse(jsonResponse, vin);
         } catch (Exception e) {
@@ -332,7 +332,7 @@ public class NhtsaVINDecoder {
             }
         }
 
-        Log.d(TAG, "✓ Decoded online: " + data.modelYear + " " + data.make + " " + data.model);
+        DebugLog.d(TAG, "✓ Decoded online: " + data.modelYear + " " + data.make + " " + data.model);
         return data;
     }
 

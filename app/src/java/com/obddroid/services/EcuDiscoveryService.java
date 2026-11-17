@@ -2,6 +2,7 @@ package com.obddroid.services;
 
 import android.util.Log;
 import com.obddroid.interfaces.RawTelegramListener;
+import com.obddroid.utils.DebugLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -118,7 +119,7 @@ public class EcuDiscoveryService implements RawTelegramListener {
                     for (Map.Entry<Integer, String> entry : multilineBuffers.entrySet()) {
                         int addr = entry.getKey();
                         String ecuBuffer = entry.getValue();
-                        Log.d(TAG, "Processing buffer for ECU 0x" + Integer.toHexString(addr).toUpperCase());
+                        DebugLog.d(TAG, "Processing buffer for ECU 0x" + Integer.toHexString(addr).toUpperCase());
                         String assembledMessage = assembleMultilineMessage(ecuBuffer, addr);
                         if (!assembledMessage.isEmpty()) {
                             parseMode9Response(addr, assembledMessage);
@@ -170,7 +171,7 @@ public class EcuDiscoveryService implements RawTelegramListener {
     private void sendRawCommand(String command) {
         if (CommService.elm != null) {
             CommService.elm.sendTelegram(command.toCharArray());
-            Log.d(TAG, "TX: " + command);
+            DebugLog.d(TAG, "TX: " + command);
         }
     }
 
@@ -189,20 +190,20 @@ public class EcuDiscoveryService implements RawTelegramListener {
             return 0;
         }
 
-        Log.d(TAG, "RX: " + response);
+        DebugLog.d(TAG, "RX: " + response);
 
         // Process any pending multiline buffers when we see the prompt
         if (response.equals(">")) {
             if (!multilineBuffers.isEmpty()) {
-                Log.d(TAG, "Prompt received - processing " + multilineBuffers.size() + " pending multiline buffers");
+                DebugLog.d(TAG, "Prompt received - processing " + multilineBuffers.size() + " pending multiline buffers");
                 for (Map.Entry<Integer, String> entry : multilineBuffers.entrySet()) {
                     int addr = entry.getKey();
                     String ecuBuffer = entry.getValue();
-                    Log.d(TAG, String.format("Processing buffer for ECU 0x%X, buffer length: %d", addr, ecuBuffer.length()));
+                    DebugLog.d(TAG, String.format("Processing buffer for ECU 0x%X, buffer length: %d", addr, ecuBuffer.length()));
                     String assembledMessage = assembleMultilineMessage(ecuBuffer, addr);
-                    Log.d(TAG, "Assembled message: " + assembledMessage);
+                    DebugLog.d(TAG, "Assembled message: " + assembledMessage);
                     if (!assembledMessage.isEmpty()) {
-                        Log.d(TAG, "Calling parseMode9Response for ECU 0x" + Integer.toHexString(addr).toUpperCase());
+                        DebugLog.d(TAG, "Calling parseMode9Response for ECU 0x" + Integer.toHexString(addr).toUpperCase());
                         parseMode9Response(addr, assembledMessage);
                     } else {
                         Log.w(TAG, "Assembled message is EMPTY for ECU 0x" + Integer.toHexString(addr).toUpperCase());
@@ -226,17 +227,17 @@ public class EcuDiscoveryService implements RawTelegramListener {
         if (isMultilineStart(response)) {
             // Start of multiline message - store in ECU-specific buffer
             multilineBuffers.put(ecuAddress, response);
-            Log.d(TAG, "Multiline START for ECU 0x" + Integer.toHexString(ecuAddress).toUpperCase());
+            DebugLog.d(TAG, "Multiline START for ECU 0x" + Integer.toHexString(ecuAddress).toUpperCase());
             return response.length();
         } else if (isMultilineContinuation(response) && multilineBuffers.containsKey(ecuAddress)) {
             // Consecutive frame - append to ECU-specific buffer
             String existing = multilineBuffers.get(ecuAddress);
             multilineBuffers.put(ecuAddress, existing + response);
-            Log.d(TAG, "Multiline CONTINUE for ECU 0x" + Integer.toHexString(ecuAddress).toUpperCase());
+            DebugLog.d(TAG, "Multiline CONTINUE for ECU 0x" + Integer.toHexString(ecuAddress).toUpperCase());
             return response.length();
         } else if (!multilineBuffers.isEmpty()) {
             // Got a non-consecutive frame - process ALL pending multiline buffers
-            Log.d(TAG, "Multiline END - processing " + multilineBuffers.size() + " assembled messages");
+            DebugLog.d(TAG, "Multiline END - processing " + multilineBuffers.size() + " assembled messages");
             for (Map.Entry<Integer, String> entry : multilineBuffers.entrySet()) {
                 int addr = entry.getKey();
                 String ecuBuffer = entry.getValue();
@@ -313,7 +314,7 @@ public class EcuDiscoveryService implements RawTelegramListener {
             if (dataStart < buffer.length()) {
                 String frameData = buffer.substring(dataStart, dataEnd);
                 assembled.append(frameData);
-                Log.d(TAG, "  Frame data: " + frameData);
+                DebugLog.d(TAG, "  Frame data: " + frameData);
             }
 
             // Move to next frame
@@ -321,7 +322,7 @@ public class EcuDiscoveryService implements RawTelegramListener {
         }
 
         String result = assembled.toString();
-        Log.d(TAG, "Assembled multiline message: " + result);
+        DebugLog.d(TAG, "Assembled multiline message: " + result);
         return result;
     }
 
@@ -361,7 +362,7 @@ public class EcuDiscoveryService implements RawTelegramListener {
                 return Integer.parseInt(addrHex, 16);
             }
         } catch (NumberFormatException e) {
-            Log.d(TAG, "Could not parse ECU address from: " + response);
+            DebugLog.d(TAG, "Could not parse ECU address from: " + response);
         }
 
         return -1;  // No header found
@@ -415,30 +416,30 @@ public class EcuDiscoveryService implements RawTelegramListener {
      * - Assembled multiline data: "490A0145434D002D..."
      */
     private void parseMode9Response(int ecuAddress, String response) {
-        Log.d(TAG, String.format("parseMode9Response() called: ECU=0x%X, response=%s", ecuAddress, response));
+        DebugLog.d(TAG, String.format("parseMode9Response() called: ECU=0x%X, response=%s", ecuAddress, response));
         String data;
 
         // Check if response already starts with Mode 9 service (49)
         if (response.startsWith("49")) {
             // Already headerless (assembled multiline data) - use as-is
             data = response;
-            Log.d(TAG, "  Starts with 49, using as-is (assembled data)");
+            DebugLog.d(TAG, "  Starts with 49, using as-is (assembled data)");
         } else if (response.length() >= 3 && response.substring(0, 3).matches("[07][EF][0-9A-F]")) {
             // Starts with ECU address pattern (7E8, 7E9, 7EB, etc.) - remove header
             data = removeHeader(response);
-            Log.d(TAG, "  Detected ECU header, removed it. Data: " + data);
+            DebugLog.d(TAG, "  Detected ECU header, removed it. Data: " + data);
         } else {
             // Unknown format - try as-is
             data = response;
-            Log.d(TAG, "  Unknown format, trying as-is: " + data);
+            DebugLog.d(TAG, "  Unknown format, trying as-is: " + data);
         }
 
         // Check if this is a Mode 9 response (starts with or contains 49)
         if (!data.startsWith("49") && !data.contains("49")) {
-            Log.d(TAG, "  Not a Mode 9 response, skipping");
+            DebugLog.d(TAG, "  Not a Mode 9 response, skipping");
             return;
         }
-        Log.d(TAG, "  Is Mode 9 response, processing...");
+        DebugLog.d(TAG, "  Is Mode 9 response, processing...");
 
         // Get or create ECU info
         EcuDiscoveryInfo info = getOrCreate(ecuAddress);
@@ -552,7 +553,7 @@ public class EcuDiscoveryService implements RawTelegramListener {
 
                 if (calId != null && !calId.trim().isEmpty()) {
                     calIds.add(calId.trim());
-                    Log.d(TAG, "  Parsed Cal ID #" + (calIds.size()) + ": " + calId);
+                    DebugLog.d(TAG, "  Parsed Cal ID #" + (calIds.size()) + ": " + calId);
                 }
 
                 // Move to next occurrence

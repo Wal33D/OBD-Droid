@@ -45,6 +45,7 @@ import java.util.Locale;
 
 import io.github.recalllookup.core.RecallRecord;
 import com.obddroid.utils.VehicleData;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Screen for searching and displaying NHTSA safety recalls.
@@ -257,10 +258,10 @@ public class RecallActivity extends AppCompatActivity {
             VehicleManager vm = VehicleManager.getInstance();
             String vin = vm.getCurrentVIN();
             if (!TextUtils.isEmpty(vin)) {
-                Log.d(TAG, "Auto-searching recalls for VIN: " + vin);
+                DebugLog.d(TAG, "Auto-searching recalls for VIN: " + vin);
                 searchRecalls(vin);
             } else {
-                Log.d(TAG, "No VIN available from connected vehicle");
+                DebugLog.d(TAG, "No VIN available from connected vehicle");
                 showNoVehicleMessage();
             }
         } catch (Exception e) {

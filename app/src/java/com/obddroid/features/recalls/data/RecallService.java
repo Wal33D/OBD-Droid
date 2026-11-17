@@ -15,6 +15,7 @@ import io.github.recalllookup.android.RecallLookupAndroid;
 import io.github.recalllookup.core.RecallRecord;
 import com.obddroid.utils.VINDecoder;
 import com.obddroid.utils.VehicleData;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Service for performing recall searches using NHTSA APIs.
@@ -55,7 +56,7 @@ public class RecallService {
         this.vinDecoder = new VINDecoder(context);
         this.recallLookup = new RecallLookupAndroid(context);
         this.autoCheckService = new AutoCheckService(context);
-        Log.d(TAG, "RecallService initialized");
+        DebugLog.d(TAG, "RecallService initialized");
     }
 
     /**
@@ -71,7 +72,7 @@ public class RecallService {
      * @param callback Callback for search results
      */
     public void searchRecallsByVin(String vin, RecallSearchCallback callback) {
-        Log.d(TAG, "searchRecallsByVin called with VIN: " + vin);
+        DebugLog.d(TAG, "searchRecallsByVin called with VIN: " + vin);
 
         // Validate VIN
         if (TextUtils.isEmpty(vin)) {
@@ -89,12 +90,12 @@ public class RecallService {
         callback.onSearchStarted();
 
         // Step 1: Decode VIN to get vehicle data
-        Log.d(TAG, "Step 1: Decoding VIN to get vehicle data");
+        DebugLog.d(TAG, "Step 1: Decoding VIN to get vehicle data");
         vinDecoder.decodeAsync(vin, new VINDecoder.DecodeCallback() {
             @Override
             public void onSuccess(VehicleData vehicleData) {
-                Log.d(TAG, "VIN decode success");
-                Log.d(TAG, "VehicleData: " + (vehicleData != null ?
+                DebugLog.d(TAG, "VIN decode success");
+                DebugLog.d(TAG, "VehicleData: " + (vehicleData != null ?
                     "Make=" + vehicleData.getMake() + ", Model=" + vehicleData.getModel() +
                     ", Year=" + vehicleData.getModelYear() : "null"));
 
@@ -106,7 +107,7 @@ public class RecallService {
                 callback.onVinDecoded(vehicleData);
 
                 // Step 2: Lookup recalls with smart fallback strategy
-                Log.d(TAG, "Step 2: Starting smart recall lookup with fallback");
+                DebugLog.d(TAG, "Step 2: Starting smart recall lookup with fallback");
                 tryRecallLookupWithFallback(vin, vehicleData, 0, callback);
             }
 
@@ -175,7 +176,7 @@ public class RecallService {
         }
 
         String currentModel = modelVariations[attemptIndex];
-        Log.d(TAG, "Trying recall lookup (attempt " + (attemptIndex + 1) + "/" + modelVariations.length +
+        DebugLog.d(TAG, "Trying recall lookup (attempt " + (attemptIndex + 1) + "/" + modelVariations.length +
             "): " + vehicleData.getMake() + " " + currentModel + " " + vehicleData.getModelYear());
 
         recallLookup.getRecalls(
@@ -185,7 +186,7 @@ public class RecallService {
             new RecallLookupAndroid.RecallCallback() {
                 @Override
                 public void onSuccess(List<RecallRecord> recalls) {
-                    Log.d(TAG, "Recall lookup SUCCESS with model: " + currentModel +
+                    DebugLog.d(TAG, "Recall lookup SUCCESS with model: " + currentModel +
                         " - found " + (recalls != null ? recalls.size() : 0) + " recalls");
                     RecallSearchResult result = new RecallSearchResult(vin, vehicleData, recalls);
                     callback.onSearchCompleted(result);
@@ -261,7 +262,7 @@ public class RecallService {
             variations.add(model);
         }
 
-        Log.d(TAG, "Generated " + variations.size() + " model variations: " + variations);
+        DebugLog.d(TAG, "Generated " + variations.size() + " model variations: " + variations);
         return variations.toArray(new String[0]);
     }
 
@@ -316,6 +317,6 @@ public class RecallService {
      */
     public void cancelSearch() {
         // Note: Current libraries don't support cancellation
-        Log.d(TAG, "cancelSearch called (not implemented by underlying libraries)");
+        DebugLog.d(TAG, "cancelSearch called (not implemented by underlying libraries)");
     }
 }

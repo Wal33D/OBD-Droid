@@ -16,6 +16,7 @@ import java.util.List;
 
 import io.github.recalllookup.core.RecallRecord;
 import com.obddroid.utils.VehicleData;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Manages recall search data persistence and caching.
@@ -99,7 +100,7 @@ public class RecallDataManager {
             editor.putLong(PREF_CACHE_TIMESTAMP, result.getTimestamp());
             editor.apply();
 
-            Log.d(TAG, "Cached " + result.getRecallCount() + " recalls for VIN: " + result.getVin());
+            DebugLog.d(TAG, "Cached " + result.getRecallCount() + " recalls for VIN: " + result.getVin());
         } catch (JSONException e) {
             Log.e(TAG, "Error caching result", e);
         }
@@ -120,13 +121,13 @@ public class RecallDataManager {
 
         // Check if VIN matches
         if (!vin.equalsIgnoreCase(cachedVin)) {
-            Log.d(TAG, "VIN mismatch - no cached data for: " + vin);
+            DebugLog.d(TAG, "VIN mismatch - no cached data for: " + vin);
             return null;
         }
 
         // If we have current result in memory for this VIN, return it
         if (currentResult != null && vin.equalsIgnoreCase(currentResult.getVin())) {
-            Log.d(TAG, "Returning in-memory cached result for VIN: " + vin);
+            DebugLog.d(TAG, "Returning in-memory cached result for VIN: " + vin);
             return currentResult;
         }
 
@@ -137,7 +138,7 @@ public class RecallDataManager {
             long timestamp = prefs.getLong(PREF_CACHE_TIMESTAMP, 0);
 
             if (recallsJson == null || vehicleDataJson == null) {
-                Log.d(TAG, "No cached data found for VIN: " + vin);
+                DebugLog.d(TAG, "No cached data found for VIN: " + vin);
                 return null;
             }
 
@@ -145,7 +146,7 @@ public class RecallDataManager {
             JSONObject vehicleObj = new JSONObject(vehicleDataJson);
             // Note: VehicleData doesn't have a public constructor, so we can't reconstruct it
             // We'll return null and rely on in-memory caching
-            Log.d(TAG, "Cannot reconstruct VehicleData from cache - use in-memory only");
+            DebugLog.d(TAG, "Cannot reconstruct VehicleData from cache - use in-memory only");
             return null;
 
         } catch (JSONException e) {
@@ -223,6 +224,6 @@ public class RecallDataManager {
     public void clearCache() {
         prefs.edit().clear().apply();
         currentResult = null;
-        Log.d(TAG, "Cache cleared");
+        DebugLog.d(TAG, "Cache cleared");
     }
 }

@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Parser and evaluator for custom PID formulas
@@ -40,11 +41,11 @@ public class PidFormulaParser {
         try {
             // Substitute variables with byte values
             String expanded = expandVariables(formula, bytes);
-            Log.d(TAG, "Formula: " + formula + " -> " + expanded);
+            DebugLog.d(TAG, "Formula: " + formula + " -> " + expanded);
 
             // Evaluate the mathematical expression
             double result = evaluateExpression(expanded);
-            Log.d(TAG, "Result: " + result);
+            DebugLog.d(TAG, "Result: " + result);
 
             return result;
         } catch (Exception e) {

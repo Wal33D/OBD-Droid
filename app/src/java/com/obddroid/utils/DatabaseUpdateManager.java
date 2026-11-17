@@ -67,11 +67,11 @@ public class DatabaseUpdateManager {
     public void checkForUpdates(UpdateCallback callback) {
         executor.execute(() -> {
             try {
-                Log.d(TAG, "Checking for database updates...");
+                DebugLog.d(TAG, "Checking for database updates...");
 
                 // Check if update is needed
                 if (!isUpdateNeeded()) {
-                    Log.d(TAG, "Update not needed yet (last update was recent)");
+                    DebugLog.d(TAG, "Update not needed yet (last update was recent)");
                     if (callback != null) {
                         callback.onUpdateNotNeeded();
                     }
@@ -80,14 +80,14 @@ public class DatabaseUpdateManager {
 
                 // Check WiFi connection
                 if (!isWiFiConnected()) {
-                    Log.d(TAG, "Not on WiFi - skipping update");
+                    DebugLog.d(TAG, "Not on WiFi - skipping update");
                     if (callback != null) {
                         callback.onUpdateNotNeeded();
                     }
                     return;
                 }
 
-                Log.d(TAG, "✓ Update needed and WiFi available - starting download");
+                DebugLog.d(TAG, "✓ Update needed and WiFi available - starting download");
                 performUpdate(callback);
 
             } catch (Exception e) {
@@ -123,7 +123,7 @@ public class DatabaseUpdateManager {
         long now = System.currentTimeMillis();
         long timeSinceUpdate = now - lastUpdate;
 
-        Log.d(TAG, String.format("Last update: %d days ago",
+        DebugLog.d(TAG, String.format("Last update: %d days ago",
             timeSinceUpdate / (24 * 60 * 60 * 1000)));
 
         return timeSinceUpdate >= UPDATE_INTERVAL_MS;
@@ -159,7 +159,7 @@ public class DatabaseUpdateManager {
                 callback.onUpdateStarted();
             }
 
-            Log.d(TAG, "Downloading database from: " + DB_DOWNLOAD_URL);
+            DebugLog.d(TAG, "Downloading database from: " + DB_DOWNLOAD_URL);
 
             // Download to temp file
             tempFile = new File(context.getCacheDir(), "vpic_update.db.gz");
@@ -167,19 +167,19 @@ public class DatabaseUpdateManager {
 
             downloadFile(DB_DOWNLOAD_URL, tempFile, callback);
 
-            Log.d(TAG, "✓ Download complete, extracting...");
+            DebugLog.d(TAG, "✓ Download complete, extracting...");
 
             // Extract gzip
             extractGzip(tempFile, tempExtracted);
 
-            Log.d(TAG, "✓ Extraction complete, verifying...");
+            DebugLog.d(TAG, "✓ Extraction complete, verifying...");
 
             // Verify downloaded database
             if (!verifyDatabase(tempExtracted)) {
                 throw new IOException("Downloaded database failed verification");
             }
 
-            Log.d(TAG, "✓ Verification passed, replacing database...");
+            DebugLog.d(TAG, "✓ Verification passed, replacing database...");
 
             // Replace current database
             File dbFile = context.getDatabasePath(DB_NAME);
@@ -192,7 +192,7 @@ public class DatabaseUpdateManager {
                 .putString(PREF_DATABASE_VERSION, String.valueOf(now))
                 .apply();
 
-            Log.d(TAG, "✓ Database update complete!");
+            DebugLog.d(TAG, "✓ Database update complete!");
 
             if (callback != null) {
                 callback.onUpdateSuccess(String.valueOf(now));
@@ -255,7 +255,7 @@ public class DatabaseUpdateManager {
 
             output.flush();
 
-            Log.d(TAG, String.format("Downloaded %d bytes", total));
+            DebugLog.d(TAG, String.format("Downloaded %d bytes", total));
 
         } finally {
             if (output != null) output.close();
@@ -277,7 +277,7 @@ public class DatabaseUpdateManager {
                 fos.write(buffer, 0, len);
             }
 
-            Log.d(TAG, String.format("Extracted to %d bytes", outputFile.length()));
+            DebugLog.d(TAG, String.format("Extracted to %d bytes", outputFile.length()));
         }
     }
 
@@ -297,7 +297,7 @@ public class DatabaseUpdateManager {
             return false;
         }
 
-        Log.d(TAG, "Database verification passed (size: " + size + " bytes)");
+        DebugLog.d(TAG, "Database verification passed (size: " + size + " bytes)");
         return true;
     }
 

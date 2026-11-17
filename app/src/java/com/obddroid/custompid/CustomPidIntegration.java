@@ -7,6 +7,7 @@ import com.obddroid.ecu.EcuDataItem;
 import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.ecu.PidDefinition;
 import com.obddroid.obd.ObdProt;
+import com.obddroid.utils.DebugLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +65,7 @@ public class CustomPidIntegration {
                 EcuDataItem dataItem = createDataItem(customPid);
                 if (dataItem != null) {
                     customDataItems.add(dataItem);
-                    Log.d(TAG, "Loaded custom PID: " + customPid.getName());
+                    DebugLog.d(TAG, "Loaded custom PID: " + customPid.getName());
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load custom PID: " + customPid.getName(), e);
@@ -250,7 +251,7 @@ public class CustomPidIntegration {
                     loadedPidKeys.add(pidKey);
                     customDataItems.add(dataItem);
 
-                    Log.d(TAG, "Loaded custom PID into live data: " + customPid.getName() + " (key=" + pidKey + ")");
+                    DebugLog.d(TAG, "Loaded custom PID into live data: " + customPid.getName() + " (key=" + pidKey + ")");
                     loadedCount++;
                 }
             } catch (Exception e) {
@@ -271,7 +272,7 @@ public class CustomPidIntegration {
         for (String pidKey : loadedPidKeys) {
             try {
                 ObdProt.PidPvs.remove(pidKey);
-                Log.d(TAG, "Removed custom PID: " + pidKey);
+                DebugLog.d(TAG, "Removed custom PID: " + pidKey);
             } catch (Exception e) {
                 Log.e(TAG, "Failed to remove custom PID: " + pidKey, e);
             }

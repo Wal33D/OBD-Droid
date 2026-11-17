@@ -31,6 +31,7 @@ import java.util.Set;
 
 import com.obddroid.ui.activities.SettingsActivity;
 import com.obddroid.R;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Adapter for OBD data items (PVs)
@@ -148,14 +149,14 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
                 filtered.add(pv);
                 if (key.startsWith("F1")) {
                     gpsCount++;
-                    android.util.Log.d("ObdItemAdapter", "Found GPS field with key: " + key);
+                    DebugLog.d("ObdItemAdapter", "Found GPS field with key: " + key);
                 }
             } else if (key.startsWith("F1")) {
                 android.util.Log.w("ObdItemAdapter", "GPS key in prefs but not found in PvList: " + key);
             }
         }
         if (gpsCount > 0) {
-            android.util.Log.d("ObdItemAdapter", "Total GPS fields matched: " + gpsCount + " out of " + filtered.size() + " total items");
+            DebugLog.d("ObdItemAdapter", "Total GPS fields matched: " + gpsCount + " out of " + filtered.size() + " total items");
         }
         return (filtered);
     }

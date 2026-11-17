@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Polls the status of an Agent API run until completion.
@@ -48,7 +49,7 @@ public class AgentRunPoller {
                 try {
                     AgentApiClient.Run run = apiClient.retrieveRun(threadId, runId);
 
-                    Log.d(TAG, "Run " + runId + " status: " + run.status);
+                    DebugLog.d(TAG, "Run " + runId + " status: " + run.status);
 
                     if (run.isCompleted()) {
                         notifyCallback(() -> callback.onCompleted(run));

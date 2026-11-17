@@ -7,6 +7,7 @@ import android.util.Log;
 import com.obddroid.features.trackmode.data.LapTime;
 import com.obddroid.features.trackmode.data.Track;
 import com.obddroid.features.trackmode.data.TrackSession;
+import com.obddroid.utils.DebugLog;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,7 +76,7 @@ public class LapTimingManager {
         }
 
         startTimingThread();
-        Log.d(TAG, "Started timing session at " + track.getName());
+        DebugLog.d(TAG, "Started timing session at " + track.getName());
     }
 
     /**
@@ -98,7 +99,7 @@ public class LapTimingManager {
             notifyLapCompleted(currentLap);
         }
 
-        Log.d(TAG, "Stopped timing session");
+        DebugLog.d(TAG, "Stopped timing session");
     }
 
     /**
@@ -141,7 +142,7 @@ public class LapTimingManager {
 
         // Method 1: Check if we crossed the finish line segment
         if (currentTrack.crossesFinishLine(lastLocation, location)) {
-            Log.d(TAG, "Crossed finish line (line intersection detected)");
+            DebugLog.d(TAG, "Crossed finish line (line intersection detected)");
             return true;
         }
 
@@ -149,7 +150,7 @@ public class LapTimingManager {
         if (currentTrack.isNearFinishLine(location) && !hasPassedFinishLine) {
             hasPassedFinishLine = true;
             finishLineCrossLocation = location;
-            Log.d(TAG, "Near finish line (radius detection)");
+            DebugLog.d(TAG, "Near finish line (radius detection)");
             return true;
         } else if (!currentTrack.isNearFinishLine(location) && hasPassedFinishLine) {
             // We've moved away from finish line
@@ -185,7 +186,7 @@ public class LapTimingManager {
             if (currentLap.isValid() &&
                 (bestLap == null || currentLap.getLapTime() < bestLap.getLapTime())) {
                 bestLap = currentLap;
-                Log.d(TAG, "New best lap: " + LapTime.formatTime(bestLap.getLapTime()));
+                DebugLog.d(TAG, "New best lap: " + LapTime.formatTime(bestLap.getLapTime()));
             }
 
             notifyLapCompleted(currentLap);
@@ -207,7 +208,7 @@ public class LapTimingManager {
         deltaTime = 0;
 
         notifyLapStarted(currentLap.getLapNumber());
-        Log.d(TAG, "Started lap " + currentLap.getLapNumber());
+        DebugLog.d(TAG, "Started lap " + currentLap.getLapNumber());
     }
 
     /**
@@ -227,7 +228,7 @@ public class LapTimingManager {
             currentSector = detectedSector;
             lastSectorTime = System.currentTimeMillis();
 
-            Log.d(TAG, "Completed sector " + (currentSector - 1) + " in " +
+            DebugLog.d(TAG, "Completed sector " + (currentSector - 1) + " in " +
                       LapTime.formatTime(sectorTime));
         }
     }

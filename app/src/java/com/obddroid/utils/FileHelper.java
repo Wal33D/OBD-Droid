@@ -168,7 +168,7 @@ public class FileHelper
 		} catch (Exception e)
 		{
 			SnackbarHelper.showError(context, e.toString(), SnackbarHelper.Duration.SHORT);
-			e.printStackTrace();
+			log.log(Level.WARNING, "Saving data failed", e);
 		}
 
 		// we are done saving, allow data updates again

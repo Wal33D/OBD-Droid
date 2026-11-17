@@ -5,6 +5,7 @@ import android.util.Log;
 import com.obddroid.obd.ElmProt;
 import com.obddroid.utils.VINDecoder;
 import com.obddroid.utils.VehicleData;
+import com.obddroid.utils.DebugLog;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class VehicleManager {
         // Initialize enhanced decoder if not already done
         if (instance.vinDecoder == null && context != null) {
             instance.vinDecoder = new VINDecoder(context.getApplicationContext());
-            Log.d(TAG, "VIN Decoder initialized (parallel race strategy)");
+            DebugLog.d(TAG, "VIN Decoder initialized (parallel race strategy)");
         }
         return instance;
     }
@@ -100,7 +101,7 @@ public class VehicleManager {
      */
     public void prewarmDatabase() {
         if (vinDecoder != null) {
-            Log.d(TAG, "Pre-warming VIN database...");
+            DebugLog.d(TAG, "Pre-warming VIN database...");
             vinDecoder.prewarmDatabase();
         }
     }
@@ -154,11 +155,11 @@ public class VehicleManager {
 
         // Check if VIN actually changed
         if (vin.equals(currentVIN)) {
-            Log.d(TAG, "VIN unchanged: " + vin);
+            DebugLog.d(TAG, "VIN unchanged: " + vin);
             return;
         }
 
-        Log.d(TAG, "New VIN detected: " + vin);
+        DebugLog.d(TAG, "New VIN detected: " + vin);
         currentVIN = vin;
         isDecoding = true;
 
@@ -174,7 +175,7 @@ public class VehicleManager {
             vinDecoder.decodeAsync(vinToDecode, new VINDecoder.DecodeCallback() {
                 @Override
                 public void onSuccess(VehicleData vehicleData) {
-                    Log.d(TAG, "VIN decode successful: " + vehicleData.getDisplayName());
+                    DebugLog.d(TAG, "VIN decode successful: " + vehicleData.getDisplayName());
                     handleDecodedVehicle(vehicleData);
                 }
 
@@ -195,7 +196,7 @@ public class VehicleManager {
      * Handle successfully decoded vehicle
      */
     private void handleDecodedVehicle(VehicleData vehicleData) {
-        Log.d(TAG, "Vehicle decoded: " + vehicleData.getDisplayName());
+        DebugLog.d(TAG, "Vehicle decoded: " + vehicleData.getDisplayName());
         currentVehicleData = vehicleData;
         isDecoding = false;
 
@@ -223,7 +224,7 @@ public class VehicleManager {
      * Clear current vehicle (called on disconnect)
      */
     public void clearVehicle() {
-        Log.d(TAG, "Clearing vehicle data");
+        DebugLog.d(TAG, "Clearing vehicle data");
         currentVIN = null;
         currentVehicleData = null;
         isDecoding = false;
@@ -243,7 +244,7 @@ public class VehicleManager {
      * Used by refresh functionality
      */
     public void clearVINCache() {
-        Log.d(TAG, "Clearing VIN cache for refresh");
+        DebugLog.d(TAG, "Clearing VIN cache for refresh");
         currentVIN = null;
         currentVehicleData = null;
         isDecoding = false;
@@ -257,7 +258,7 @@ public class VehicleManager {
      * Handle VIN retrieval timeout
      */
     public void handleVINTimeout() {
-        Log.d(TAG, "VIN retrieval timed out");
+        DebugLog.d(TAG, "VIN retrieval timed out");
         vinRetrievalAttempted = true;
         // DON'T mark as permanently failed - allow manual retry via vehicle info page
         // vinRetrievalFailed = true;
@@ -273,7 +274,7 @@ public class VehicleManager {
      * Update ECU connection state
      */
     public void setECUConnectionState(ElmProt.STAT state) {
-        Log.d(TAG, "ECU connection state changed: " + state);
+        DebugLog.d(TAG, "ECU connection state changed: " + state);
         ElmProt.STAT oldState = ecuConnectionState;
         ecuConnectionState = state;
 
@@ -315,7 +316,7 @@ public class VehicleManager {
      * Mark that ECU has been selected by user
      */
     public void setECUSelected(boolean selected) {
-        Log.d(TAG, "ECU selected: " + selected);
+        DebugLog.d(TAG, "ECU selected: " + selected);
         ecuSelected = selected;
         vinRetrievalAttempted = false;
         vinRetrievalFailed = false;
@@ -433,11 +434,11 @@ public class VehicleManager {
 
         // Check if VIN actually changed
         if (vin.equals(currentVIN) && currentVehicleData != null) {
-            Log.d(TAG, "VIN unchanged and already decoded: " + vin);
+            DebugLog.d(TAG, "VIN unchanged and already decoded: " + vin);
             return;
         }
 
-        Log.d(TAG, "Forcing offline VIN decode: " + vin);
+        DebugLog.d(TAG, "Forcing offline VIN decode: " + vin);
         currentVIN = vin;
         isDecoding = true;
 
@@ -481,7 +482,7 @@ public class VehicleManager {
      */
     public float estimateTankCapacity(VehicleData vehicleData) {
         if (vehicleData == null) {
-            Log.d(TAG, "No vehicle data available for tank estimation, using default");
+            DebugLog.d(TAG, "No vehicle data available for tank estimation, using default");
             return 16.0f; // Generic default
         }
 
@@ -518,7 +519,7 @@ public class VehicleManager {
 
         // Pickup Trucks - Largest tanks
         if (bodyClass.contains("pickup") || vehicleType.contains("truck")) {
-            Log.d(TAG, "Detected pickup truck - base: 26 gal");
+            DebugLog.d(TAG, "Detected pickup truck - base: 26 gal");
             return 26.0f; // Pickup trucks: 26-36 gallons
         }
 
@@ -526,24 +527,24 @@ public class VehicleManager {
         if (bodyClass.contains("sport utility") || bodyClass.contains("suv")) {
             // Check if it's a large/luxury SUV
             if (isLargeSUV(vehicleData)) {
-                Log.d(TAG, "Detected large SUV - base: 23 gal");
+                DebugLog.d(TAG, "Detected large SUV - base: 23 gal");
                 return 23.0f; // Large SUVs: 22-26 gallons
             } else {
-                Log.d(TAG, "Detected midsize SUV - base: 19 gal");
+                DebugLog.d(TAG, "Detected midsize SUV - base: 19 gal");
                 return 19.0f; // Midsize SUVs/Crossovers: 18-20 gallons
             }
         }
 
         // Crossovers (often classified as wagon or hatchback)
         if (bodyClass.contains("crossover") || bodyClass.contains("wagon/suv")) {
-            Log.d(TAG, "Detected crossover - base: 17 gal");
+            DebugLog.d(TAG, "Detected crossover - base: 17 gal");
             return 17.0f; // Crossovers: 15-18 gallons
         }
 
         // Vans and Minivans
         if (bodyClass.contains("van") || bodyClass.contains("minivan") ||
             bodyClass.contains("passenger van") || bodyClass.contains("cargo van")) {
-            Log.d(TAG, "Detected van - base: 20 gal");
+            DebugLog.d(TAG, "Detected van - base: 20 gal");
             return 20.0f; // Vans: 18-25 gallons
         }
 
@@ -551,52 +552,52 @@ public class VehicleManager {
         if (bodyClass.contains("sedan")) {
             // Check size classification
             if (bodyClass.contains("large") || bodyClass.contains("full-size")) {
-                Log.d(TAG, "Detected large sedan - base: 18 gal");
+                DebugLog.d(TAG, "Detected large sedan - base: 18 gal");
                 return 18.0f; // Full-size sedans: 17-20 gallons
             } else if (bodyClass.contains("mid") || bodyClass.contains("medium")) {
-                Log.d(TAG, "Detected midsize sedan - base: 16 gal");
+                DebugLog.d(TAG, "Detected midsize sedan - base: 16 gal");
                 return 16.0f; // Midsize sedans: 15-18 gallons
             } else if (bodyClass.contains("compact") || bodyClass.contains("small")) {
-                Log.d(TAG, "Detected compact sedan - base: 14 gal");
+                DebugLog.d(TAG, "Detected compact sedan - base: 14 gal");
                 return 14.0f; // Compact sedans: 13-15 gallons
             } else {
-                Log.d(TAG, "Detected sedan (unspecified size) - base: 16 gal");
+                DebugLog.d(TAG, "Detected sedan (unspecified size) - base: 16 gal");
                 return 16.0f; // Generic sedan
             }
         }
 
         // Coupes
         if (bodyClass.contains("coupe") || bodyClass.contains("2-door")) {
-            Log.d(TAG, "Detected coupe - base: 15 gal");
+            DebugLog.d(TAG, "Detected coupe - base: 15 gal");
             return 15.0f; // Coupes: 14-17 gallons
         }
 
         // Hatchbacks
         if (bodyClass.contains("hatchback")) {
-            Log.d(TAG, "Detected hatchback - base: 13 gal");
+            DebugLog.d(TAG, "Detected hatchback - base: 13 gal");
             return 13.0f; // Hatchbacks: 12-15 gallons
         }
 
         // Convertibles
         if (bodyClass.contains("convertible")) {
-            Log.d(TAG, "Detected convertible - base: 15 gal");
+            DebugLog.d(TAG, "Detected convertible - base: 15 gal");
             return 15.0f; // Convertibles: 14-17 gallons
         }
 
         // Wagons
         if (bodyClass.contains("wagon") || bodyClass.contains("estate")) {
-            Log.d(TAG, "Detected wagon - base: 17 gal");
+            DebugLog.d(TAG, "Detected wagon - base: 17 gal");
             return 17.0f; // Wagons: 16-19 gallons
         }
 
         // Sports cars and performance vehicles
         if (bodyClass.contains("sport") || vehicleType.contains("sports")) {
-            Log.d(TAG, "Detected sports car - base: 16 gal");
+            DebugLog.d(TAG, "Detected sports car - base: 16 gal");
             return 16.0f; // Sports cars: 14-19 gallons
         }
 
         // Default fallback
-        Log.d(TAG, "Unknown body class '" + bodyClass + "' - using default: 16 gal");
+        DebugLog.d(TAG, "Unknown body class '" + bodyClass + "' - using default: 16 gal");
         return 16.0f; // Generic default for unknown types
     }
 
@@ -609,7 +610,7 @@ public class VehicleManager {
         // Luxury brand adjustment (typically larger tanks)
         if (isLuxuryBrand(vehicleData.make)) {
             adjusted += 2.0f;
-            Log.d(TAG, "Applied luxury brand adjustment: +2.0 gal");
+            DebugLog.d(TAG, "Applied luxury brand adjustment: +2.0 gal");
         }
 
         // Engine displacement adjustment
@@ -619,18 +620,18 @@ public class VehicleManager {
                 if (displacement >= 5.0f) {
                     // Large engines (5.0L+) often paired with larger tanks
                     adjusted += 3.0f;
-                    Log.d(TAG, "Applied large engine adjustment: +3.0 gal");
+                    DebugLog.d(TAG, "Applied large engine adjustment: +3.0 gal");
                 } else if (displacement >= 3.5f) {
                     // Mid-large engines (3.5L-5.0L)
                     adjusted += 1.5f;
-                    Log.d(TAG, "Applied mid-large engine adjustment: +1.5 gal");
+                    DebugLog.d(TAG, "Applied mid-large engine adjustment: +1.5 gal");
                 } else if (displacement <= 1.5f) {
                     // Small engines (< 1.5L) often in economy cars
                     adjusted -= 2.0f;
-                    Log.d(TAG, "Applied small engine adjustment: -2.0 gal");
+                    DebugLog.d(TAG, "Applied small engine adjustment: -2.0 gal");
                 }
             } catch (NumberFormatException e) {
-                Log.d(TAG, "Could not parse displacement: " + vehicleData.displacementL);
+                DebugLog.d(TAG, "Could not parse displacement: " + vehicleData.displacementL);
             }
         }
 
@@ -642,10 +643,10 @@ public class VehicleManager {
             String level = vehicleData.electrificationLevel.toLowerCase();
             if (level.contains("plug-in hybrid") || level.contains("phev")) {
                 adjusted -= 4.0f;
-                Log.d(TAG, "Applied PHEV adjustment: -4.0 gal");
+                DebugLog.d(TAG, "Applied PHEV adjustment: -4.0 gal");
             } else if (level.contains("hybrid")) {
                 adjusted -= 2.0f;
-                Log.d(TAG, "Applied hybrid adjustment: -2.0 gal");
+                DebugLog.d(TAG, "Applied hybrid adjustment: -2.0 gal");
             }
         }
 
@@ -655,7 +656,7 @@ public class VehicleManager {
             if (driveType.contains("4wd") || driveType.contains("awd") ||
                 driveType.contains("4-wheel") || driveType.contains("all-wheel")) {
                 adjusted += 1.0f;
-                Log.d(TAG, "Applied AWD/4WD adjustment: +1.0 gal");
+                DebugLog.d(TAG, "Applied AWD/4WD adjustment: +1.0 gal");
             }
         }
 
@@ -734,7 +735,7 @@ public class VehicleManager {
      */
     public void reloadVinDatabase() {
         if (vinDecoder != null) {
-            Log.d(TAG, "Reloading VIN database in VehicleManager");
+            DebugLog.d(TAG, "Reloading VIN database in VehicleManager");
             vinDecoder.reloadDatabase();
         }
     }

@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Loads custom GPS and Motion telemetry field definitions from CSV files.
@@ -64,7 +65,7 @@ public class TelemetryFieldLoader {
             }
 
             reader.close();
-            Log.d(TAG, "Loaded " + fields.size() + " fields from " + path);
+            DebugLog.d(TAG, "Loaded " + fields.size() + " fields from " + path);
 
         } catch (IOException e) {
             Log.w(TAG, "Could not load custom fields from " + path + ", using defaults: " + e.getMessage());

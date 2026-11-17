@@ -18,6 +18,7 @@ import com.obddroid.common.ProcessVariables.TypedPvList;
 import com.obddroid.ecu.Conversion;
 import com.obddroid.ecu.EcuDataItem;
 import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.utils.DebugLog;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -99,12 +100,12 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         items.clear();
 
         if (pvList == null || pvList.isEmpty()) {
-            android.util.Log.d("ObdRecyclerAdapter", "updateData: pvList is null or empty");
+            DebugLog.d("ObdRecyclerAdapter", "updateData: pvList is null or empty");
             notifyDataSetChanged();
             return;
         }
 
-        android.util.Log.d("ObdRecyclerAdapter", "updateData: pvList size = " + pvList.size());
+        DebugLog.d("ObdRecyclerAdapter", "updateData: pvList size = " + pvList.size());
 
         // Categorize items
         List<EcuDataPv> gpsItems = new ArrayList<>();
@@ -253,7 +254,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Add map preview tile at the end
             ListItem mapTile = ListItem.createMapTile();
             items.add(mapTile);
-            android.util.Log.d("ObdRecyclerAdapter", "Added map tile to items list. Map tile isMap=" + mapTile.isMap);
+            DebugLog.d("ObdRecyclerAdapter", "Added map tile to items list. Map tile isMap=" + mapTile.isMap);
         }
 
         // Motion Telemetry at the very bottom
@@ -265,11 +266,11 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Add tilt indicator tile at the end
             ListItem tiltTile = ListItem.createTiltTile();
             items.add(tiltTile);
-            android.util.Log.d("ObdRecyclerAdapter", "Added tilt tile to items list. Tilt tile isTilt=" + tiltTile.isTilt);
+            DebugLog.d("ObdRecyclerAdapter", "Added tilt tile to items list. Tilt tile isTilt=" + tiltTile.isTilt);
         }
 
         // Log categorization summary
-        android.util.Log.d("ObdRecyclerAdapter", String.format(
+        DebugLog.d("ObdRecyclerAdapter", String.format(
             "updateData summary: total=%d, diagnostic=%d, obd=%d, temp=%d, pressure=%d, fuel=%d, o2=%d, test=%d, unidentified=%d, gps=%d, motion=%d, finalItems=%d",
             pvList.size(), diagnosticItems.size(), obdItems.size(), temperatureItems.size(), pressureItems.size(),
             fuelSystemItems.size(), oxygenSensorItems.size(), testStatusItems.size(), unidentifiedItems.size(),
@@ -322,7 +323,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ListItem item = items.get(position);
-        android.util.Log.d("ObdRecyclerAdapter", String.format("onBindViewHolder pos=%d, isHeader=%s, isMap=%s, holder=%s",
+        DebugLog.d("ObdRecyclerAdapter", String.format("onBindViewHolder pos=%d, isHeader=%s, isMap=%s, holder=%s",
             position, item.isHeader, item.isMap, holder.getClass().getSimpleName()));
 
         if (holder instanceof HeaderViewHolder) {
@@ -520,7 +521,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
      * Load map tile with GPS coordinates from GPS telemetry data
      */
     private void loadMapForGpsData(MapViewHolder holder) {
-        android.util.Log.d("ObdRecyclerAdapter", "loadMapForGpsData called");
+        DebugLog.d("ObdRecyclerAdapter", "loadMapForGpsData called");
 
         try {
             // Find GPS lat/lon from ObdProt.PidPvs
@@ -528,13 +529,13 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             com.obddroid.ecu.EcuDataPv latPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.0.0");
             com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F101.0.0");
 
-            android.util.Log.d("ObdRecyclerAdapter", String.format("GPS PVs found: lat=%s, lon=%s", latPv != null, lonPv != null));
+            DebugLog.d("ObdRecyclerAdapter", String.format("GPS PVs found: lat=%s, lon=%s", latPv != null, lonPv != null));
 
             if (latPv != null && lonPv != null) {
                 Object latValue = latPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
                 Object lonValue = lonPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
 
-                android.util.Log.d("ObdRecyclerAdapter", String.format("GPS values: lat=%s, lon=%s", latValue, lonValue));
+                DebugLog.d("ObdRecyclerAdapter", String.format("GPS values: lat=%s, lon=%s", latValue, lonValue));
 
                 if (latValue instanceof Number && lonValue instanceof Number) {
                     double latitude = ((Number) latValue).doubleValue();
@@ -542,7 +543,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     // Check if GPS coordinates are valid (not 0,0 or near 0,0 which indicates no GPS lock)
                     if (Math.abs(latitude) < 0.0001 && Math.abs(longitude) < 0.0001) {
-                        android.util.Log.d("ObdRecyclerAdapter", "Skipping map update - invalid GPS coordinates (0,0)");
+                        DebugLog.d("ObdRecyclerAdapter", "Skipping map update - invalid GPS coordinates (0,0)");
                         return;
                     }
 
@@ -562,11 +563,11 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     boolean shouldUpdate = (holder.lastUpdateTime == 0) || locationChangedSignificantly || enoughTimePassed;
 
                     if (!shouldUpdate) {
-                        android.util.Log.d("ObdRecyclerAdapter", "Skipping map update - no significant change");
+                        DebugLog.d("ObdRecyclerAdapter", "Skipping map update - no significant change");
                         return;
                     }
 
-                    android.util.Log.d("ObdRecyclerAdapter", String.format("Loading map for coords: lat=%f, lon=%f (distance changed: %f)",
+                    DebugLog.d("ObdRecyclerAdapter", String.format("Loading map for coords: lat=%f, lon=%f (distance changed: %f)",
                         latitude, longitude, distanceChanged));
 
                     // Update tracking variables
@@ -607,7 +608,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
      * Load tilt indicator with acceleration data from motion telemetry
      */
     private void loadTiltDataForMotion(TiltViewHolder holder) {
-        android.util.Log.d("ObdRecyclerAdapter", "loadTiltDataForMotion called");
+        DebugLog.d("ObdRecyclerAdapter", "loadTiltDataForMotion called");
 
         try {
             // Find acceleration X/Y from ObdProt.PidPvs
@@ -615,19 +616,19 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             com.obddroid.ecu.EcuDataPv accelXPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F200.0.0");
             com.obddroid.ecu.EcuDataPv accelYPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F201.0.0");
 
-            android.util.Log.d("ObdRecyclerAdapter", String.format("Accel PVs found: X=%s, Y=%s", accelXPv != null, accelYPv != null));
+            DebugLog.d("ObdRecyclerAdapter", String.format("Accel PVs found: X=%s, Y=%s", accelXPv != null, accelYPv != null));
 
             if (accelXPv != null && accelYPv != null) {
                 Object accelXValue = accelXPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
                 Object accelYValue = accelYPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
 
-                android.util.Log.d("ObdRecyclerAdapter", String.format("Accel values: X=%s, Y=%s", accelXValue, accelYValue));
+                DebugLog.d("ObdRecyclerAdapter", String.format("Accel values: X=%s, Y=%s", accelXValue, accelYValue));
 
                 if (accelXValue instanceof Number && accelYValue instanceof Number) {
                     float accelX = ((Number) accelXValue).floatValue();
                     float accelY = ((Number) accelYValue).floatValue();
 
-                    android.util.Log.d("ObdRecyclerAdapter", String.format("Updating tilt indicator: X=%f, Y=%f", accelX, accelY));
+                    DebugLog.d("ObdRecyclerAdapter", String.format("Updating tilt indicator: X=%f, Y=%f", accelX, accelY));
 
                     // Update the tilt indicator view
                     holder.tiltIndicator.setAcceleration(accelX, accelY);

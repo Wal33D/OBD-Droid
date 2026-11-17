@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Queue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.IOException;
 
@@ -1614,8 +1615,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             return fuelGallonsPerHour;
 
         } catch (Exception e) {
-            log.warning("Error in MAP-based fuel calculation: " + e.getMessage());
-            e.printStackTrace();
+            log.log(Level.WARNING, "Error in MAP-based fuel calculation", e);
             return 0f;
         }
     }

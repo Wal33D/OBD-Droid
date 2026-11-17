@@ -1,0 +1,116 @@
+name: Bug report
+description: Something in the app is broken or wrong.
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please **do not paste your VIN, licence plate, location, or a full
+        log that contains them**. If a log is needed, remove the VIN (or replace it with `XXXXXXXXXXXXXXXXX`)
+        before you attach it.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, and what did the app do instead?
+      placeholder: |
+        1. Connected to the adapter
+        2. Opened Fault Codes and tapped Scan
+        3. Expected the stored codes; got "No data" instead
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: "Android Settings → Apps → OBD-Droid shows it at the bottom (App details), or the Play Store page."
+      placeholder: "e.g. 1.4.0"
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Phone and Android version
+      placeholder: "e.g. Pixel 7, Android 15"
+    validations:
+      required: true
+  - type: input
+    id: adapter
+    attributes:
+      label: Adapter
+      description: Brand and model as printed on it or on the listing where you bought it.
+      placeholder: "e.g. Vgate iCar Pro BLE, reports ELM327 v2.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: link
+    attributes:
+      label: How the adapter is connected
+      options:
+        - Bluetooth Classic
+        - Bluetooth Low Energy (BLE)
+        - Wi-Fi
+        - USB
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: vehicle
+    attributes:
+      label: Vehicle
+      description: Year, make, model, engine. No VIN please.
+      placeholder: "e.g. 2014 Honda Civic 1.8L"
+    validations:
+      required: true
+  - type: dropdown
+    id: protocol
+    attributes:
+      label: OBD protocol (if the app shows it)
+      options:
+        - ISO 15765-4 CAN 11-bit 500 kbit/s
+        - ISO 15765-4 CAN 29-bit 500 kbit/s
+        - ISO 15765-4 CAN 11-bit 250 kbit/s
+        - ISO 15765-4 CAN 29-bit 250 kbit/s
+        - ISO 14230-4 KWP2000 (fast init)
+        - ISO 14230-4 KWP2000 (5-baud init)
+        - ISO 9141-2
+        - SAE J1850 PWM
+        - SAE J1850 VPW
+        - Not shown / not sure
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app
+      options:
+        - Connecting to the adapter
+        - Live data / gauges
+        - Fault codes (read or clear)
+        - Freeze frame
+        - Emissions readiness
+        - Full vehicle scan / ECU list
+        - VIN decode / recalls
+        - CSV logging / exports
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: repeatable
+    attributes:
+      label: Does it happen every time?
+      options:
+        - Every time
+        - Sometimes
+        - Once so far
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or log excerpt (VIN removed)
+      description: Drag images in here. For logs, paste only the lines around the problem.
+      render: text
+    validations:
+      required: false

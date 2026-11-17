@@ -1,0 +1,21 @@
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The job or problem first. Upvote existing ideas instead of posting duplicates.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
+  - type: input
+    id: who
+    attributes:
+      label: Who it is for
+      placeholder: "e.g. DIY owners with older KWP cars, shop technicians"
+    validations:
+      required: false

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or "how do I…"
+    url: https://github.com/Wal33D/OBD-Droid/discussions/categories/q-a
+    about: Ask in Discussions (Q&A). Issues are for bugs and agreed work.
+  - name: "It works with my adapter / car"
+    url: https://github.com/Wal33D/OBD-Droid/discussions/categories/adapter-compatibility
+    about: Post a working (or not working) adapter in Discussions; it feeds docs/compatibility.md.
+  - name: Feature idea to talk through
+    url: https://github.com/Wal33D/OBD-Droid/discussions/categories/feature-ideas
+    about: Not sure it belongs in the app yet? Start a discussion first.

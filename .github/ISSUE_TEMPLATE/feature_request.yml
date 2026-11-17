@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest something the app should do. For open-ended ideas, Discussions → Feature ideas is a better start.
+title: "[Feature] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The job or problem, not the solution yet. "When I … I want to … so that …"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like the app to do?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How do you do it today?
+      description: Another app, a workaround, or not at all.
+    validations:
+      required: false
+  - type: input
+    id: vehicle
+    attributes:
+      label: Vehicle or adapter it matters for (if any; no VIN)
+      placeholder: "e.g. any CAN car / 2012 Toyota Tacoma"
+    validations:
+      required: false
+  - type: dropdown
+    id: who
+    attributes:
+      label: You are mostly a…
+      options:
+        - Car owner / DIY
+        - Professional technician
+        - Tuner / enthusiast
+        - Developer
+        - Other
+    validations:
+      required: false

@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -235,7 +234,9 @@ public class VINDecoder {
                 if (onlineData != null && onlineData.isValid()) {
                     return onlineData;
                 }
-            } catch (CompletionException | CancellationException ignored) {}
+            } catch (CancellationException ignored) {
+                // Both suppliers catch their own errors and return null, so getNow only throws if cancelled
+            }
 
             // Total failure
             VehicleData errorData = new VehicleData();

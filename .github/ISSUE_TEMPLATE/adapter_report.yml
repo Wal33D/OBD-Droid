@@ -1,0 +1,79 @@
+name: Adapter / vehicle report
+description: Tell us how the app behaves with your adapter and car (working or not). Feeds docs/compatibility.md.
+title: "[Adapter] <adapter> on <year make model>"
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reports that say "it all works" are as useful as bug reports: they go into the
+        [compatibility list](https://github.com/Wal33D/OBD-Droid/blob/main/docs/compatibility.md).
+        You can also post this in Discussions → Adapter compatibility. **No VIN, plate or location, please.**
+  - type: input
+    id: adapter
+    attributes:
+      label: Adapter brand and model
+      placeholder: "e.g. OBDLink MX+"
+    validations:
+      required: true
+  - type: input
+    id: chip
+    attributes:
+      label: Chip / firmware (if you know it)
+      description: From the adapter's listing or box, or another app that shows it (for example "ELM327 v1.5", "STN2255").
+      placeholder: "e.g. ELM327 v1.5"
+    validations:
+      required: false
+  - type: dropdown
+    id: link
+    attributes:
+      label: Connection
+      options:
+        - Bluetooth Classic
+        - Bluetooth Low Energy (BLE)
+        - Wi-Fi
+        - USB
+    validations:
+      required: true
+  - type: input
+    id: vehicle
+    attributes:
+      label: Vehicle (year, make, model, engine; no VIN)
+      placeholder: "e.g. 2019 Ford F-150 3.5L EcoBoost"
+    validations:
+      required: true
+  - type: input
+    id: protocol
+    attributes:
+      label: Protocol the app detected
+      placeholder: "e.g. ISO 15765-4 CAN 11-bit 500 kbit/s"
+    validations:
+      required: false
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What worked
+      description: Tick everything you tried and that worked. Leave the rest empty and say in Notes what failed.
+      options:
+        - label: Connects and stays connected
+        - label: Live data
+        - label: Read fault codes
+        - label: Clear fault codes
+        - label: Freeze frame
+        - label: Emissions readiness
+        - label: Read VIN
+        - label: Full vehicle scan finds more than one ECU
+  - type: input
+    id: versions
+    attributes:
+      label: App version and Android version
+      placeholder: "e.g. 1.4.0 on Android 14"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: What failed, anything odd (slow connect, drops after a few minutes, needed a setting changed).
+    validations:
+      required: false

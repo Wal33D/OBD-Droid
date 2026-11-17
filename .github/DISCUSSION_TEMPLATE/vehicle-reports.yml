@@ -1,0 +1,34 @@
+title: "<year make model>: <what you saw>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For what the app showed on a particular vehicle: odd live-data values, extra ECUs found, a code
+        that read differently from another tool, or a diagnosis the app helped with.
+        **Remove the VIN, plate and any location from text, screenshots and logs.**
+  - type: input
+    id: vehicle
+    attributes:
+      label: Vehicle (year, make, model, engine; no VIN)
+    validations:
+      required: true
+  - type: input
+    id: adapter
+    attributes:
+      label: Adapter and connection
+      placeholder: "e.g. OBDLink LX, Bluetooth Classic"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: What you saw
+      description: Screenshots welcome (crop out the VIN footer).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, or what another tool showed
+    validations:
+      required: false

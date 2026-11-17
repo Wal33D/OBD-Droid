@@ -1,0 +1,68 @@
+title: "<adapter> on <year make model>: works / partly / no"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One post per adapter + vehicle. Working reports matter as much as broken ones: a maintainer copies
+        them into [docs/compatibility.md](https://github.com/Wal33D/OBD-Droid/blob/main/docs/compatibility.md)
+        and links back here. **No VIN, plate or location, please.**
+  - type: input
+    id: adapter
+    attributes:
+      label: Adapter brand and model
+      placeholder: "e.g. Veepeak OBDCheck BLE+"
+    validations:
+      required: true
+  - type: dropdown
+    id: link
+    attributes:
+      label: Connection
+      options:
+        - Bluetooth Classic
+        - Bluetooth Low Energy (BLE)
+        - Wi-Fi
+        - USB
+    validations:
+      required: true
+  - type: input
+    id: vehicle
+    attributes:
+      label: Vehicle (year, make, model, engine; no VIN)
+    validations:
+      required: true
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Overall
+      options:
+        - Works
+        - Partly works
+        - Does not work
+    validations:
+      required: true
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What worked
+      options:
+        - label: Connects and stays connected
+        - label: Live data
+        - label: Read fault codes
+        - label: Clear fault codes
+        - label: Freeze frame
+        - label: Emissions readiness
+        - label: Read VIN
+        - label: Full vehicle scan finds more than one ECU
+  - type: input
+    id: versions
+    attributes:
+      label: App version and Android version
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Protocol shown, anything that failed, settings you had to change.
+    validations:
+      required: false

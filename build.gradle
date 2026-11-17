@@ -17,19 +17,3 @@ allprojects {
         maven { url 'https://jitpack.io' }
     }
 }
-
-tasks.register("testEcuConversions") {
-    group = "verification"
-    description = "Placeholder for ECU conversion regression suite."
-    doLast {
-        println("TODO: hook ECU conversion regression suite into this task.")
-    }
-}
-
-tasks.register("testPidDefinitions") {
-    group = "verification"
-    description = "Placeholder for PID definition repository smoke tests."
-    doLast {
-        println("TODO: hook PID definition repository tests into this task.")
-    }
-}

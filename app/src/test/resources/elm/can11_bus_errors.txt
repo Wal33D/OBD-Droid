@@ -1,0 +1,46 @@
+# Bus-level errors after ECU detection. Each one: status DISCONNECTED, ATPC at once,
+# then ATAT0, ATSP0 and the failed command again.
+@include can11_detect.txt
+@service 01
+TX 0100
+RX CAN ERROR
+>
+@status DISCONNECTED
+TX ATPC
+RX OK
+>
+TX ATAT0
+RX OK
+>
+TX ATSP0
+RX OK
+>
+TX 0100
+RX BUS INIT: ...ERROR
+>
+@status DISCONNECTED
+TX ATPC
+RX OK
+>
+TX ATAT0
+RX OK
+>
+TX ATSP0
+RX OK
+>
+TX 0100
+RX UNABLE TO CONNECT
+>
+@status DISCONNECTED
+TX ATPC
+RX OK
+>
+TX ATAT0
+RX OK
+>
+TX ATSP0
+RX OK
+>
+TX 0100
+RX 41 00 00 00 00 00
+@status CONNECTED

@@ -97,6 +97,7 @@ import com.obddroid.features.copilot.data.CoPilotController;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.services.discovery.DiscoveryManager;
 import com.obddroid.R;
+import com.obddroid.utils.DebugLog;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -1022,14 +1023,14 @@ public class MainActivity extends AppCompatActivity
         databaseUpdateManager.checkForUpdates(new DatabaseUpdateManager.UpdateCallback() {
             @Override
             public void onUpdateStarted() {
-                Log.d(TAG, "VIN database update started (background)");
+                DebugLog.d(TAG, "VIN database update started (background)");
             }
 
             @Override
             public void onUpdateProgress(int bytesDownloaded, int totalBytes) {
                 // Silent background download - no UI updates
                 if (bytesDownloaded % (10 * 1024 * 1024) == 0) { // Log every 10MB
-                    Log.d(TAG, String.format("Database download: %d/%d MB",
+                    DebugLog.d(TAG, String.format("Database download: %d/%d MB",
                         bytesDownloaded / 1024 / 1024,
                         totalBytes / 1024 / 1024));
                 }
@@ -1037,7 +1038,7 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onUpdateSuccess(String newVersion) {
-                Log.d(TAG, "✓ VIN database updated successfully to version: " + newVersion);
+                DebugLog.d(TAG, "✓ VIN database updated successfully to version: " + newVersion);
 
                 // Reload the database in the VIN decoder
                 VehicleManager vehicleManager = VehicleManager.getInstance();
@@ -1056,9 +1057,9 @@ public class MainActivity extends AppCompatActivity
             public void onUpdateNotNeeded() {
                 int daysSince = databaseUpdateManager.getDaysSinceUpdate();
                 if (daysSince >= 0) {
-                    Log.d(TAG, String.format("VIN database is current (updated %d days ago)", daysSince));
+                    DebugLog.d(TAG, String.format("VIN database is current (updated %d days ago)", daysSince));
                 } else {
-                    Log.d(TAG, "VIN database using bundled version");
+                    DebugLog.d(TAG, "VIN database using bundled version");
                 }
             }
         });
@@ -1294,9 +1295,9 @@ public class MainActivity extends AppCompatActivity
         // Refresh adapter to show GPS fields by re-reading preferences
         // Only refresh if PidPvs is not empty (avoid wiping data during protocol state changes)
         if (mPidAdapter != null && !ObdProt.PidPvs.isEmpty()) {
-            Log.d("MainActivity", "Refreshing PID adapter after GPS start, PidPvs size: " + ObdProt.PidPvs.size());
+            DebugLog.d("MainActivity", "Refreshing PID adapter after GPS start, PidPvs size: " + ObdProt.PidPvs.size());
             mPidAdapter.setPvList(ObdProt.PidPvs);
-            Log.d("MainActivity", "PID adapter now has " + mPidAdapter.getCount() + " items");
+            DebugLog.d("MainActivity", "PID adapter now has " + mPidAdapter.getCount() + " items");
         } else if (ObdProt.PidPvs.isEmpty()) {
             Log.w("MainActivity", "Skipping adapter refresh - PidPvs is empty (protocol may be resetting)");
         } else {

@@ -424,7 +424,7 @@ public abstract class ProtoHeader
 					result = TimeStampFormat.parse(getParamString(id, fieldMap, buffer));
 				} catch (ParseException ex)
 				{
-					ex.printStackTrace();
+					log.log(Level.WARNING, "Bad timestamp field " + id, ex);
 				}
 				break;
 
@@ -434,7 +434,7 @@ public abstract class ProtoHeader
 					result = DateStampFormat.parse(getParamString(id, fieldMap, buffer));
 				} catch (ParseException ex)
 				{
-					ex.printStackTrace();
+					log.log(Level.WARNING, "Bad datestamp field " + id, ex);
 				}
 				break;
 

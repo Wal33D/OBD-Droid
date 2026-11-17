@@ -20,6 +20,7 @@ import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.ecu.Conversions;
 import com.obddroid.obd.ObdProt;
 import com.obddroid.ui.activities.SettingsActivity;
+import com.obddroid.utils.DebugLog;
 
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -91,7 +92,7 @@ public class SensorTelemetryManager implements SensorEventListener {
     }
 
     private void unregisterDataItems() {
-        Log.d(TAG, "Unregistering " + registeredKeys.size() + " sensor fields from PidPvs");
+        DebugLog.d(TAG, "Unregistering " + registeredKeys.size() + " sensor fields from PidPvs");
         for (String key : registeredKeys) {
             ObdProt.PidPvs.remove(key);
         }
@@ -101,7 +102,7 @@ public class SensorTelemetryManager implements SensorEventListener {
         dataPvs.clear();
         registeredKeys.clear();
 
-        Log.d(TAG, "Sensor fields removed from PidPvs");
+        DebugLog.d(TAG, "Sensor fields removed from PidPvs");
     }
 
     private void registerDataItems() {
@@ -118,7 +119,7 @@ public class SensorTelemetryManager implements SensorEventListener {
             TelemetryFieldLoader.FieldDefinition customField = customFields.get(field.mnemonic.toLowerCase());
             if (customField != null) {
                 description = customField.label;
-                Log.d(TAG, "Using custom label for " + field.mnemonic + ": " + description);
+                DebugLog.d(TAG, "Using custom label for " + field.mnemonic + ": " + description);
             } else {
                 description = appContext.getString(field.labelResId);
             }
@@ -227,16 +228,16 @@ public class SensorTelemetryManager implements SensorEventListener {
             for (String key : registeredKeys) {
                 if (!updatedPids.contains(key)) {
                     updatedPids.add(key);
-                    Log.d(TAG, "Added sensor field to preferences: " + key);
+                    DebugLog.d(TAG, "Added sensor field to preferences: " + key);
                 }
             }
 
             // Save updated selection
             prefs.edit().putStringSet(com.obddroid.ui.activities.SettingsActivity.KEY_DATA_ITEMS, updatedPids).apply();
-            Log.d(TAG, "Sensor fields added to selected PIDs preference");
+            DebugLog.d(TAG, "Sensor fields added to selected PIDs preference");
         }
 
-        Log.d(TAG, "Sensor fields registered in PidPvs: " + registeredKeys.size());
+        DebugLog.d(TAG, "Sensor fields registered in PidPvs: " + registeredKeys.size());
     }
 
     private enum DataField {

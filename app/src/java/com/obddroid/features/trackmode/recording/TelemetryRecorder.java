@@ -14,6 +14,7 @@ import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.obd.ObdProt;
 import com.obddroid.features.trackmode.data.LapTime;
 import com.obddroid.features.trackmode.detection.LapTimingManager;
+import com.obddroid.utils.DebugLog;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -117,7 +118,7 @@ public class TelemetryRecorder implements LocationListener, SensorEventListener 
         // Start recording thread
         startRecordingThread();
 
-        Log.d(TAG, "Started telemetry recording");
+        DebugLog.d(TAG, "Started telemetry recording");
     }
 
     /**
@@ -150,7 +151,7 @@ public class TelemetryRecorder implements LocationListener, SensorEventListener 
             }
         }
 
-        Log.d(TAG, "Stopped telemetry recording");
+        DebugLog.d(TAG, "Stopped telemetry recording");
     }
 
     /**
@@ -331,12 +332,12 @@ public class TelemetryRecorder implements LocationListener, SensorEventListener 
 
     @Override
     public void onProviderEnabled(String provider) {
-        Log.d(TAG, "GPS provider enabled");
+        DebugLog.d(TAG, "GPS provider enabled");
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-        Log.d(TAG, "GPS provider disabled");
+        DebugLog.d(TAG, "GPS provider disabled");
     }
 
     // SensorEventListener implementation

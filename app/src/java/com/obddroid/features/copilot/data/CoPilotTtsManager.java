@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.util.Log;
 
 import com.obddroid.utils.OpenAiService;
+import com.obddroid.utils.DebugLog;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,7 +45,7 @@ public class CoPilotTtsManager {
      */
     public CompletableFuture<Void> speak(String text, TtsCallback callback) {
         if (!isEnabled) {
-            Log.d(TAG, "TTS is disabled");
+            DebugLog.d(TAG, "TTS is disabled");
             return CompletableFuture.completedFuture(null);
         }
 
@@ -55,7 +56,7 @@ public class CoPilotTtsManager {
                 }
 
                 // Get audio from OpenAI TTS
-                Log.d(TAG, "Generating speech for: " + text.substring(0, Math.min(50, text.length())) + "...");
+                DebugLog.d(TAG, "Generating speech for: " + text.substring(0, Math.min(50, text.length())) + "...");
                 byte[] audioData = openAiService.textToSpeech(text);
 
                 // Save to temporary file
@@ -94,7 +95,7 @@ public class CoPilotTtsManager {
             mediaPlayer.prepare();
 
             mediaPlayer.setOnCompletionListener(mp -> {
-                Log.d(TAG, "Playback completed");
+                DebugLog.d(TAG, "Playback completed");
                 if (callback != null) {
                     callback.onTtsComplete();
                 }
@@ -111,7 +112,7 @@ public class CoPilotTtsManager {
             });
 
             mediaPlayer.start();
-            Log.d(TAG, "Started playback, duration: " + mediaPlayer.getDuration() + "ms");
+            DebugLog.d(TAG, "Started playback, duration: " + mediaPlayer.getDuration() + "ms");
 
         } catch (IOException e) {
             Log.e(TAG, "Failed to play audio file", e);

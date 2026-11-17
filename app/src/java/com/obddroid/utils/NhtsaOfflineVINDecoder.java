@@ -101,9 +101,9 @@ public class NhtsaOfflineVINDecoder {
 
             // Copy database from assets if it doesn't exist
             if (!dbFile.exists()) {
-                Log.d(TAG, "Copying vPIC database from assets...");
+                DebugLog.d(TAG, "Copying vPIC database from assets...");
                 copyDatabaseFromAssets(dbFile);
-                Log.d(TAG, "✓ Database copied successfully");
+                DebugLog.d(TAG, "✓ Database copied successfully");
             }
 
             // Open database in read-only mode
@@ -113,7 +113,7 @@ public class NhtsaOfflineVINDecoder {
                     SQLiteDatabase.OPEN_READONLY
             );
 
-            Log.d(TAG, "✓ vPIC database opened: " + dbFile.length() + " bytes");
+            DebugLog.d(TAG, "✓ vPIC database opened: " + dbFile.length() + " bytes");
 
         } catch (IOException e) {
             Log.e(TAG, "Failed to initialize database", e);
@@ -145,7 +145,7 @@ public class NhtsaOfflineVINDecoder {
         VehicleInfo info = new VehicleInfo();
         info.vin = vin;
 
-        Log.d(TAG, "=== Decoding VIN: " + vin + " ===");
+        DebugLog.d(TAG, "=== Decoding VIN: " + vin + " ===");
 
         // Validate VIN format
         if (!validateVIN(vin)) {
@@ -157,7 +157,7 @@ public class NhtsaOfflineVINDecoder {
 
         synchronized (databaseLock) {
             if (database == null || !database.isOpen()) {
-                Log.d(TAG, "Database not open, initializing...");
+                DebugLog.d(TAG, "Database not open, initializing...");
                 initDatabase();
             }
 
@@ -166,7 +166,7 @@ public class NhtsaOfflineVINDecoder {
             String wmi = vin.substring(0, 3);
             char yearChar = vin.charAt(9);
             Integer year = decodeYear(yearChar, vin.charAt(6));
-            Log.d(TAG, "Extracted - WMI: " + wmi + ", Year: " + year);
+            DebugLog.d(TAG, "Extracted - WMI: " + wmi + ", Year: " + year);
 
             // Query database for make/manufacturer
             queryMakeAndManufacturer(wmi, info);
@@ -174,7 +174,7 @@ public class NhtsaOfflineVINDecoder {
             // If Make is null but we have a manufacturer, try to extract make from manufacturer name
             if (info.make == null && info.manufacturer != null) {
                 info.make = extractMakeFromManufacturer(info.manufacturer);
-                Log.d(TAG, "Extracted make from manufacturer: " + info.make);
+                DebugLog.d(TAG, "Extracted make from manufacturer: " + info.make);
             }
 
             // Set model year
@@ -214,13 +214,13 @@ public class NhtsaOfflineVINDecoder {
                       "LEFT JOIN Country c ON w.CountryId = c.Id " +
                       "WHERE w.Wmi = ? LIMIT 1";
 
-        Log.d(TAG, "Querying database for WMI: " + wmi);
+        DebugLog.d(TAG, "Querying database for WMI: " + wmi);
         try (Cursor cursor = database.rawQuery(query, new String[]{wmi})) {
             if (cursor.moveToFirst()) {
                 info.make = cursor.getString(0);
                 info.manufacturer = cursor.getString(1);
                 info.plantCountry = cursor.getString(2);
-                Log.d(TAG, "✓ Found: Make=" + info.make + ", Mfr=" + info.manufacturer + ", Country=" + info.plantCountry);
+                DebugLog.d(TAG, "✓ Found: Make=" + info.make + ", Mfr=" + info.manufacturer + ", Country=" + info.plantCountry);
             } else {
                 Log.w(TAG, "✗ WMI '" + wmi + "' not found in database");
             }
@@ -249,7 +249,7 @@ public class NhtsaOfflineVINDecoder {
             if (cursor.moveToFirst()) {
                 int schemaId = cursor.getInt(0);
                 String schemaName = cursor.getString(1);
-                Log.d(TAG, "Found VIN schema: " + schemaName + " (ID: " + schemaId + ")");
+                DebugLog.d(TAG, "Found VIN schema: " + schemaName + " (ID: " + schemaId + ")");
 
                 // Query patterns for detailed attributes
                 queryPatternAttributes(schemaId, vin, info);
@@ -436,7 +436,7 @@ public class NhtsaOfflineVINDecoder {
                 // Try pattern against all extracted VIN positions
                 for (String vinSubstring : vinSubstrings) {
                     if (matchesAnyPattern(vinSubstring, patternKeys)) {
-                        Log.d(TAG, "✓ Attribute match: Table=" + tableName + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
+                        DebugLog.d(TAG, "✓ Attribute match: Table=" + tableName + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
                         setter.set(value);
                         return; // Found it
                     }
@@ -475,7 +475,7 @@ public class NhtsaOfflineVINDecoder {
                 // Try pattern against all extracted VIN positions
                 for (String vinSubstring : vinSubstrings) {
                     if (matchesAnyPattern(vinSubstring, patternKeys)) {
-                        Log.d(TAG, "✓ Pattern match: Element=" + tableName + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
+                        DebugLog.d(TAG, "✓ Pattern match: Element=" + tableName + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
                         setter.set(value);
                         return; // Found it
                     }
@@ -512,7 +512,7 @@ public class NhtsaOfflineVINDecoder {
                 // Try pattern against all extracted VIN positions
                 for (String vinSubstring : vinSubstrings) {
                     if (matchesAnyPattern(vinSubstring, patternKeys)) {
-                        Log.d(TAG, "✓ Attribute match: Element=" + elementId + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
+                        DebugLog.d(TAG, "✓ Attribute match: Element=" + elementId + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
                         setter.set(value);
                         return; // Found it
                     }
@@ -767,7 +767,7 @@ public class NhtsaOfflineVINDecoder {
             if (database != null && database.isOpen()) {
                 database.close();
                 database = null;
-                Log.d(TAG, "Database closed");
+                DebugLog.d(TAG, "Database closed");
             }
         }
     }
@@ -779,7 +779,7 @@ public class NhtsaOfflineVINDecoder {
         synchronized (databaseLock) {
             close();
             initDatabase();
-            Log.d(TAG, "Database reloaded");
+            DebugLog.d(TAG, "Database reloaded");
         }
     }
 }

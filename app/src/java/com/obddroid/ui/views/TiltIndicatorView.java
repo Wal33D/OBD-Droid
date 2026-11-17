@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.AttributeSet;
 import android.view.View;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Custom view that displays a tilt indicator (inclinometer) for vehicle motion
@@ -124,7 +125,7 @@ public class TiltIndicatorView extends View implements SensorEventListener {
         offsetX = accelX;
         offsetY = accelY;
         invalidate();
-        android.util.Log.d("TiltIndicatorView", String.format("Recalibrated: offsetX=%f, offsetY=%f", offsetX, offsetY));
+        DebugLog.d("TiltIndicatorView", String.format("Recalibrated: offsetX=%f, offsetY=%f", offsetX, offsetY));
     }
 
     /**

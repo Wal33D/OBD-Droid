@@ -9,6 +9,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.obddroid.utils.DebugLog;
 
 /**
  * SQLite database for storing custom PID definitions
@@ -104,7 +105,7 @@ public class CustomPidDatabase extends SQLiteOpenHelper {
         ContentValues values = pidToContentValues(pid);
 
         long id = db.insert(TABLE_PIDS, null, values);
-        Log.d(TAG, "Inserted PID: " + pid.getName() + " with ID: " + id);
+        DebugLog.d(TAG, "Inserted PID: " + pid.getName() + " with ID: " + id);
 
         return id;
     }
@@ -119,7 +120,7 @@ public class CustomPidDatabase extends SQLiteOpenHelper {
         int rows = db.update(TABLE_PIDS, values, COL_ID + " = ?",
                 new String[]{String.valueOf(pid.getId())});
 
-        Log.d(TAG, "Updated PID: " + pid.getName() + ", rows affected: " + rows);
+        DebugLog.d(TAG, "Updated PID: " + pid.getName() + ", rows affected: " + rows);
         return rows;
     }
 
@@ -130,7 +131,7 @@ public class CustomPidDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         int rows = db.delete(TABLE_PIDS, COL_ID + " = ?", new String[]{String.valueOf(id)});
 
-        Log.d(TAG, "Deleted PID ID: " + id + ", rows affected: " + rows);
+        DebugLog.d(TAG, "Deleted PID ID: " + id + ", rows affected: " + rows);
         return rows;
     }
 
@@ -215,7 +216,7 @@ public class CustomPidDatabase extends SQLiteOpenHelper {
             cursor.close();
         }
 
-        Log.d(TAG, "Retrieved " + pids.size() + " PIDs");
+        DebugLog.d(TAG, "Retrieved " + pids.size() + " PIDs");
         return pids;
     }
 

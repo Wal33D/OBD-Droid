@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +49,7 @@ import java.util.Locale;
  */
 public class AutoCheckActivity extends AppCompatActivity {
 
+    private static final String TAG = "AutoCheckActivity";
     private static final String PREFS_NAME = "AutoCheckCache";
     private static final String PREFS_KEY_PREFIX = "report_";
 
@@ -1758,8 +1760,8 @@ public class AutoCheckActivity extends AppCompatActivity {
 
             editor.apply();
         } catch (Exception e) {
-            // Silent fail - caching is not critical
-            e.printStackTrace();
+            // Caching is not critical
+            Log.w(TAG, "Could not cache report", e);
         }
     }
 
@@ -1842,7 +1844,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             // Silent fail - if cache load fails, user can generate new report
             loadingContainer.setVisibility(View.GONE);
             loadingText.setText("Loading vehicle history...");
-            e.printStackTrace();
+            Log.w(TAG, "Could not load cached report", e);
         }
     }
 

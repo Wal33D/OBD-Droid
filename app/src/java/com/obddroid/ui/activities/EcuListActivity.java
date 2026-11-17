@@ -50,6 +50,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -437,8 +438,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
                         Snackbar.LENGTH_LONG);
                 });
             } catch (Exception e) {
-                log.warning("Error during ECU discovery: " + e.getMessage());
-                e.printStackTrace();
+                log.log(Level.WARNING, "Error during ECU discovery", e);
 
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);

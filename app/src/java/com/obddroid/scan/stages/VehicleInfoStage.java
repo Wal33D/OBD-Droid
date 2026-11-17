@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -123,9 +124,7 @@ public final class VehicleInfoStage implements ScanStage {
 
                         log.info("SCAN: Captured VID " + key + ": " + description + " = " + value);
                     } catch (Exception e) {
-                        // Log the actual error so we can debug
-                        log.warning("SCAN: Error serializing VID " + entry.getKey() + ": " + e.getMessage());
-                        e.printStackTrace();
+                        log.log(Level.WARNING, "SCAN: Error serializing VID " + entry.getKey(), e);
                         continue;
                     }
                 }

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Manager class for custom PID operations
@@ -228,7 +229,7 @@ public class CustomPidManager {
         for (CustomPid pid : samplePids) {
             try {
                 database.insertPid(pid);
-                Log.d(TAG, "Loaded sample PID: " + pid.getName());
+                DebugLog.d(TAG, "Loaded sample PID: " + pid.getName());
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load sample PID: " + pid.getName(), e);
             }

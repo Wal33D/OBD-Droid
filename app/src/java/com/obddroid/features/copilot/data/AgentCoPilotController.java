@@ -7,6 +7,7 @@ import android.util.Log;
 import com.obddroid.features.copilot.data.CoPilotCallback;
 import com.obddroid.features.copilot.data.tools.AgentToolExecutor;
 import com.obddroid.scan.ScanResultsManager;
+import com.obddroid.utils.DebugLog;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -132,7 +133,7 @@ public class AgentCoPilotController {
 
         executor.execute(() -> {
             try {
-                Log.d(TAG, "User message: " + message);
+                DebugLog.d(TAG, "User message: " + message);
 
                 // Add message to thread
                 apiClient.createMessage(currentThreadId, "user", message);
@@ -159,7 +160,7 @@ public class AgentCoPilotController {
                     List<AgentApiClient.Message> messages = apiClient.listMessages(run.threadId, 1);
                     if (!messages.isEmpty() && "assistant".equals(messages.get(0).role)) {
                         String response = messages.get(0).content;
-                        Log.d(TAG, "Assistant response: " + response.substring(0, Math.min(100, response.length())));
+                        DebugLog.d(TAG, "Assistant response: " + response.substring(0, Math.min(100, response.length())));
                         callback.onResponse(response);
                     } else {
                         callback.onError("No response from assistant");
@@ -205,7 +206,7 @@ public class AgentCoPilotController {
 
             @Override
             public void onStatusUpdate(AgentApiClient.Run run) {
-                Log.d(TAG, "Run status: " + run.status);
+                DebugLog.d(TAG, "Run status: " + run.status);
             }
         });
     }

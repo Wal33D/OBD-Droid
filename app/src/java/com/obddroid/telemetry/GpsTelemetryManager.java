@@ -25,6 +25,7 @@ import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.ecu.Conversions;
 import com.obddroid.obd.ObdProt;
 import com.obddroid.ui.activities.SettingsActivity;
+import com.obddroid.utils.DebugLog;
 
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -90,7 +91,7 @@ public class GpsTelemetryManager implements LocationListener {
     }
 
     private void unregisterDataItems() {
-        Log.d(TAG, "Unregistering " + registeredKeys.size() + " GPS fields from PidPvs");
+        DebugLog.d(TAG, "Unregistering " + registeredKeys.size() + " GPS fields from PidPvs");
         for (String key : registeredKeys) {
             ObdProt.PidPvs.remove(key);
         }
@@ -100,7 +101,7 @@ public class GpsTelemetryManager implements LocationListener {
         dataPvs.clear();
         registeredKeys.clear();
 
-        Log.d(TAG, "GPS fields removed from PidPvs");
+        DebugLog.d(TAG, "GPS fields removed from PidPvs");
     }
 
     private void registerDataItems() {
@@ -117,7 +118,7 @@ public class GpsTelemetryManager implements LocationListener {
             TelemetryFieldLoader.FieldDefinition customField = customFields.get(field.mnemonic.toLowerCase());
             if (customField != null) {
                 description = customField.label;
-                Log.d(TAG, "Using custom label for " + field.mnemonic + ": " + description);
+                DebugLog.d(TAG, "Using custom label for " + field.mnemonic + ": " + description);
             } else {
                 description = appContext.getString(field.labelResId);
             }
@@ -153,9 +154,9 @@ public class GpsTelemetryManager implements LocationListener {
             items.put(field, item);
             dataPvs.put(field, item.pv);
 
-            Log.d(TAG, "Registered GPS field: " + field.mnemonic + " with key: " + key);
+            DebugLog.d(TAG, "Registered GPS field: " + field.mnemonic + " with key: " + key);
         }
-        Log.d(TAG, "Total GPS fields registered: " + registeredKeys.size());
+        DebugLog.d(TAG, "Total GPS fields registered: " + registeredKeys.size());
         ensureLiveDataPreferences();
     }
 
@@ -211,7 +212,7 @@ public class GpsTelemetryManager implements LocationListener {
         if (!active) {
             return;
         }
-        Log.d(TAG, "GPS location update: lat=" + location.getLatitude() + ", lon=" + location.getLongitude());
+        DebugLog.d(TAG, "GPS location update: lat=" + location.getLatitude() + ", lon=" + location.getLongitude());
         updateField(GpsField.LATITUDE, location.getLatitude());
         updateField(GpsField.LONGITUDE, location.getLongitude());
         updateField(GpsField.ALTITUDE, location.hasAltitude() ? location.getAltitude() : null);
@@ -253,7 +254,7 @@ public class GpsTelemetryManager implements LocationListener {
         pv.put(EcuDataPv.FID_DESCRIPT, appContext.getString(field.labelResId));
         pv.put(EcuDataPv.FID_UNITS, field.units);
 
-        Log.d(TAG, "Updated " + field.mnemonic + ": " + oldValue + " -> " + clipped);
+        DebugLog.d(TAG, "Updated " + field.mnemonic + ": " + oldValue + " -> " + clipped);
     }
 
     /**
@@ -294,16 +295,16 @@ public class GpsTelemetryManager implements LocationListener {
             for (String key : registeredKeys) {
                 if (!updatedPids.contains(key)) {
                     updatedPids.add(key);
-                    Log.d(TAG, "Added GPS field to preferences: " + key);
+                    DebugLog.d(TAG, "Added GPS field to preferences: " + key);
                 }
             }
 
             // Save updated selection
             prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updatedPids).apply();
-            Log.d(TAG, "GPS fields added to selected PIDs preference");
+            DebugLog.d(TAG, "GPS fields added to selected PIDs preference");
         }
 
-        Log.d(TAG, "GPS fields registered in PidPvs: " + registeredKeys.size());
+        DebugLog.d(TAG, "GPS fields registered in PidPvs: " + registeredKeys.size());
     }
 
     private enum GpsField {

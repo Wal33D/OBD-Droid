@@ -32,6 +32,7 @@ import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.obddroid.common.ProcessVariables.PvChangeEvent;
 import com.obddroid.common.ProcessVariables.ProcessVar;
 import com.obddroid.common.ProcessVariables.TypedPvList;
+import com.obddroid.utils.DebugLog;
 import java.beans.PropertyChangeEvent;
 import java.util.Locale;
 import java.util.Map;
@@ -284,7 +285,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         contentLayout.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "Footer clicked!");
+                DebugLog.d(TAG, "Footer clicked!");
                 // Allow expanding even without connection to show demo
                 // Add subtle press feedback
                 v.setAlpha(0.8f);
@@ -292,7 +293,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                 toggleExpanded();
             }
         });
-        Log.d(TAG, "VehicleInfoFooter initialized - click listener set");
+        DebugLog.d(TAG, "VehicleInfoFooter initialized - click listener set");
 
         // Always visible
         setVisibility(View.VISIBLE);
@@ -301,7 +302,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         vehicleListener = new VehicleManager.SimpleVehicleChangeListener() {
             @Override
             public void onVINChanged(String vin) {
-                Log.d(TAG, "VIN changed: " + vin);
+                DebugLog.d(TAG, "VIN changed: " + vin);
                 post(() -> {
                     isConnected = true;
                     vehicleInfo.setText("VIN: " + vin);
@@ -315,13 +316,13 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
             @Override
             public void onVehicleDecoded(VehicleData vehicleData) {
-                Log.d(TAG, "Vehicle decoded: " + vehicleData.getDisplayName());
+                DebugLog.d(TAG, "Vehicle decoded: " + vehicleData.getDisplayName());
                 post(() -> updateVehicleDisplay(VehicleManager.getInstance().getCurrentVIN(), vehicleData));
             }
 
             @Override
             public void onVehicleDisconnected() {
-                Log.d(TAG, "Vehicle disconnected");
+                DebugLog.d(TAG, "Vehicle disconnected");
                 post(() -> {
                     isConnected = false;
                     currentVehicleData = null;
@@ -340,7 +341,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
             @Override
             public void onECUConnectionChanged(ElmProt.STAT state) {
-                Log.d(TAG, "ECU connection state changed: " + state);
+                DebugLog.d(TAG, "ECU connection state changed: " + state);
                 post(() -> {
                     // NODATA is a transient state - keep ECU connected if we have cached data
                     // This prevents the footer from showing as disconnected during temporary NODATA
@@ -355,7 +356,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                         if (cachedVin != null && cachedData != null) {
                             // Keep ECU connected state during NODATA if we have cached data
                             // This prevents the footer from flickering grey during transient NODATA states
-                            Log.d(TAG, "NODATA received but keeping ECU connected (cached data present)");
+                            DebugLog.d(TAG, "NODATA received but keeping ECU connected (cached data present)");
                             isEcuConnected = true;
                             // Don't update display - keep existing state
                             return;
@@ -378,7 +379,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
                         if (cachedVin != null && cachedData != null) {
                             // We have cached data - restore full vehicle display with green indicator
-                            Log.d(TAG, "ECU reconnected with cached vehicle data - restoring display");
+                            DebugLog.d(TAG, "ECU reconnected with cached vehicle data - restoring display");
                             updateVehicleDisplay(cachedVin, cachedData);
                             return; // Don't call updateConnectionDisplay
                         }
@@ -391,7 +392,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
             @Override
             public void onVINRetrievalFailed() {
-                Log.d(TAG, "VIN retrieval failed - Mode 9 not supported");
+                DebugLog.d(TAG, "VIN retrieval failed - Mode 9 not supported");
                 post(() -> {
                     // Clear connected flag since we don't have VIN
                     isConnected = false;
@@ -403,7 +404,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
             @Override
             public void onDecodingStarted() {
-                Log.d(TAG, "VIN decoding started");
+                DebugLog.d(TAG, "VIN decoding started");
                 post(() -> {
                     connectionStatus.setText("Decoding vehicle information...");
                     connectionStatus.setTextColor(Color.parseColor("#FFA726")); // Orange for loading
@@ -473,7 +474,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     @Override
     public void pvChanged(PvChangeEvent event) {
         // Mode 9 data updated - refresh expanded content if visible
-        Log.d(TAG, "Mode 9 data update received: " + event.getKey());
+        DebugLog.d(TAG, "Mode 9 data update received: " + event.getKey());
 
         // BACKUP VIN DETECTION: Check if this event contains a VIN
         // This ensures VIN is detected even if MainActivity's listener misses the event
@@ -608,7 +609,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
     private void toggleExpanded() {
         setExpandedState(!isExpanded);
-        Log.d(TAG, "toggleExpanded: isExpanded = " + isExpanded);
+        DebugLog.d(TAG, "toggleExpanded: isExpanded = " + isExpanded);
 
         // Animate arrow rotation with smooth easing
         if (expandIndicator != null) {
@@ -620,7 +621,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         }
 
         if (isExpanded) {
-            Log.d(TAG, "Expanding footer - updating content");
+            DebugLog.d(TAG, "Expanding footer - updating content");
             updateExpandedContent();
 
             // Show overlay
@@ -658,12 +659,12 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                     }
                 });
                 animator.start();
-                Log.d(TAG, "Expanded container made visible with slide+bounce");
+                DebugLog.d(TAG, "Expanded container made visible with slide+bounce");
             } else {
                 Log.e(TAG, "expandedContainer is null!");
             }
         } else {
-            Log.d(TAG, "Collapsing footer");
+            DebugLog.d(TAG, "Collapsing footer");
 
             // Hide overlay
             if (overlayView != null) {
@@ -700,7 +701,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) expandedContainer.getLayoutParams();
                         params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
                         expandedContainer.setLayoutParams(params);
-                        Log.d(TAG, "Expanded container hidden");
+                        DebugLog.d(TAG, "Expanded container hidden");
                     }
 
                     @Override
@@ -1118,7 +1119,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         }
 
         // Log for debugging
-        Log.d(TAG, "Extracting mnemonic from description: " + description);
+        DebugLog.d(TAG, "Extracting mnemonic from description: " + description);
 
         // Map human-readable labels to mnemonics
 
@@ -1408,14 +1409,14 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
         // Check if there's a description available
         if (mnemonicKey != null) {
-            Log.d(TAG, "Looking up description for mnemonic: " + mnemonicKey);
+            DebugLog.d(TAG, "Looking up description for mnemonic: " + mnemonicKey);
         }
         final String description = (mnemonicKey != null) ? Messages.getDescription(mnemonicKey) : null;
         final boolean hasDescription = (description != null && !description.isEmpty());
         if (hasDescription) {
-            Log.d(TAG, "Found description for " + label + ": " + description);
+            DebugLog.d(TAG, "Found description for " + label + ": " + description);
         } else if (mnemonicKey != null) {
-            Log.d(TAG, "No description found for mnemonic: " + mnemonicKey);
+            DebugLog.d(TAG, "No description found for mnemonic: " + mnemonicKey);
         }
 
         // Only make rows clickable in OBD Data section (when mnemonicKey or pidDisplay provided)

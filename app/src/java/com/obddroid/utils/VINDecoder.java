@@ -47,7 +47,7 @@ public class VINDecoder {
     public VINDecoder(Context context) {
         this.onlineDecoder = new NhtsaVINDecoder(context);
         this.offlineDecoder = new NhtsaOfflineVINDecoder(context);
-        Log.d(TAG, "✓ Hybrid VIN Decoder initialized (Parallel Race Strategy)");
+        DebugLog.d(TAG, "✓ Hybrid VIN Decoder initialized (Parallel Race Strategy)");
 
         // Pre-warm database in background
         prewarmDatabase();
@@ -66,7 +66,7 @@ public class VINDecoder {
                     offlineDecoder.validate("00000000000000000");
                     long elapsed = System.currentTimeMillis() - startTime;
                     databasePrewarmed = true;
-                    Log.d(TAG, "✓ Database pre-warmed in " + elapsed + "ms");
+                    DebugLog.d(TAG, "✓ Database pre-warmed in " + elapsed + "ms");
                 } catch (Exception e) {
                     Log.w(TAG, "Database pre-warm failed: " + e.getMessage());
                 }
@@ -81,16 +81,16 @@ public class VINDecoder {
     public void decodeAsync(String vin, DecodeCallback callback) {
         executor.execute(() -> {
             try {
-                Log.d(TAG, "Starting parallel VIN decode for: " + vin);
+                DebugLog.d(TAG, "Starting parallel VIN decode for: " + vin);
                 long startTime = System.currentTimeMillis();
 
                 VehicleData vehicleData = decodeParallel(vin);
 
                 long elapsed = System.currentTimeMillis() - startTime;
-                Log.d(TAG, String.format("✓ Decode completed in %dms", elapsed));
+                DebugLog.d(TAG, String.format("✓ Decode completed in %dms", elapsed));
 
                 if (vehicleData.isValid()) {
-                    Log.d(TAG, String.format("✓ Decoded (%s): %s %s %s",
+                    DebugLog.d(TAG, String.format("✓ Decoded (%s): %s %s %s",
                             vehicleData.dataSource,
                             vehicleData.getModelYear(),
                             vehicleData.getMake(),
@@ -133,27 +133,27 @@ public class VINDecoder {
         // Start online decoder in parallel
         CompletableFuture<VehicleData> onlineFuture = CompletableFuture.supplyAsync(() -> {
             try {
-                Log.d(TAG, "  → Starting online decode...");
+                DebugLog.d(TAG, "  → Starting online decode...");
                 long start = System.currentTimeMillis();
                 VehicleData data = onlineDecoder.decode(vin);
                 long elapsed = System.currentTimeMillis() - start;
 
                 if (data != null && data.isValid()) {
-                    Log.d(TAG, "  ✓ Online decode succeeded in " + elapsed + "ms");
+                    DebugLog.d(TAG, "  ✓ Online decode succeeded in " + elapsed + "ms");
                     data.dataSource = "NHTSA API (Online)";
 
                     // If we're first, use our result
                     if (raceCompleted.compareAndSet(false, true)) {
-                        Log.d(TAG, "  🏆 Online decoder won the race!");
+                        DebugLog.d(TAG, "  🏆 Online decoder won the race!");
                         result.complete(data);
                     }
                     return data;
                 } else {
-                    Log.d(TAG, "  ✗ Online decode failed after " + elapsed + "ms");
+                    DebugLog.d(TAG, "  ✗ Online decode failed after " + elapsed + "ms");
                     return null;
                 }
             } catch (Exception e) {
-                Log.d(TAG, "  ✗ Online decode error: " + e.getMessage());
+                DebugLog.d(TAG, "  ✗ Online decode error: " + e.getMessage());
                 return null;
             }
         }, executor);
@@ -161,29 +161,29 @@ public class VINDecoder {
         // Start offline decoder in parallel
         CompletableFuture<VehicleData> offlineFuture = CompletableFuture.supplyAsync(() -> {
             try {
-                Log.d(TAG, "  → Starting offline decode...");
+                DebugLog.d(TAG, "  → Starting offline decode...");
                 long start = System.currentTimeMillis();
                 NhtsaOfflineVINDecoder.VehicleInfo info = offlineDecoder.decode(vin);
                 long elapsed = System.currentTimeMillis() - start;
 
                 if (info != null && info.valid) {
-                    Log.d(TAG, "  ✓ Offline decode succeeded in " + elapsed + "ms");
+                    DebugLog.d(TAG, "  ✓ Offline decode succeeded in " + elapsed + "ms");
                     VehicleData data = VehicleData.fromOfflineDecoder(info);
                     data.dataSource = "Offline Database";
                     addOfflineIndicators(data);
 
                     // If we're first, use our result
                     if (raceCompleted.compareAndSet(false, true)) {
-                        Log.d(TAG, "  🏆 Offline decoder won the race!");
+                        DebugLog.d(TAG, "  🏆 Offline decoder won the race!");
                         result.complete(data);
                     }
                     return data;
                 } else {
-                    Log.d(TAG, "  ✗ Offline decode failed after " + elapsed + "ms");
+                    DebugLog.d(TAG, "  ✗ Offline decode failed after " + elapsed + "ms");
                     return null;
                 }
             } catch (Exception e) {
-                Log.d(TAG, "  ✗ Offline decode error: " + e.getMessage());
+                DebugLog.d(TAG, "  ✗ Offline decode error: " + e.getMessage());
                 return null;
             }
         }, executor);
@@ -200,7 +200,7 @@ public class VINDecoder {
                     // Give online decoder 500ms more to complete
                     VehicleData onlineData = onlineFuture.get(500, TimeUnit.MILLISECONDS);
                     if (onlineData != null && onlineData.isValid()) {
-                        Log.d(TAG, "  ⚡ Switching to online data (better quality)");
+                        DebugLog.d(TAG, "  ⚡ Switching to online data (better quality)");
                         return onlineData;
                     }
                 } catch (Exception ignored) {
@@ -293,7 +293,7 @@ public class VINDecoder {
      * Reload database (called after automatic update)
      */
     public void reloadDatabase() {
-        Log.d(TAG, "Reloading VIN database after update");
+        DebugLog.d(TAG, "Reloading VIN database after update");
         offlineDecoder.reloadDatabase();
         databasePrewarmed = false;
         prewarmDatabase();
@@ -305,6 +305,6 @@ public class VINDecoder {
     public void shutdown() {
         executor.shutdown();
         offlineDecoder.close();
-        Log.d(TAG, "VIN Decoder shutdown");
+        DebugLog.d(TAG, "VIN Decoder shutdown");
     }
 }

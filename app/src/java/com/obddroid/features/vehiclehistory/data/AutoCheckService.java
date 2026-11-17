@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.obddroid.BuildConfig;
+import com.obddroid.utils.DebugLog;
 
 /**
  * Service to fetch AutoCheck vehicle history reports from the API.
@@ -70,7 +71,7 @@ public class AutoCheckService {
 
         executor.execute(() -> {
             try {
-                Log.d(TAG, "Fetching AutoCheck report for VIN: " + vin);
+                DebugLog.d(TAG, "Fetching AutoCheck report for VIN: " + vin);
 
                 // Build API URL
                 URL url = new URL(API_BASE_URL + "/api/autocheck/lookup");
@@ -120,7 +121,7 @@ public class AutoCheckService {
                 JSONObject reportData = json.getJSONObject("data");
                 AutoCheckReport report = AutoCheckReport.fromJSON(reportData);
 
-                Log.d(TAG, "Successfully fetched AutoCheck report: " + report.getVehicleName());
+                DebugLog.d(TAG, "Successfully fetched AutoCheck report: " + report.getVehicleName());
 
                 // Return on main thread
                 mainHandler.post(() -> callback.onSuccess(report));
@@ -146,7 +147,7 @@ public class AutoCheckService {
 
         executor.execute(() -> {
             try {
-                Log.d(TAG, "Fetching AutoCheck report with PDF for VIN: " + vin);
+                DebugLog.d(TAG, "Fetching AutoCheck report with PDF for VIN: " + vin);
 
                 // Build API URL
                 URL url = new URL(API_BASE_URL + "/api/autocheck/lookup");
@@ -202,10 +203,10 @@ public class AutoCheckService {
                 if (json.has("pdfBase64")) {
                     String pdfBase64 = json.getString("pdfBase64");
                     pdfFilePath = savePdfToFile(vin, pdfBase64);
-                    Log.d(TAG, "PDF saved to: " + pdfFilePath);
+                    DebugLog.d(TAG, "PDF saved to: " + pdfFilePath);
                 }
 
-                Log.d(TAG, "Successfully fetched AutoCheck report with PDF: " + report.getVehicleName());
+                DebugLog.d(TAG, "Successfully fetched AutoCheck report with PDF: " + report.getVehicleName());
 
                 // Return on main thread
                 final String finalPdfPath = pdfFilePath;
@@ -258,7 +259,7 @@ public class AutoCheckService {
 
         executor.execute(() -> {
             try {
-                Log.d(TAG, "Decoding VIN: " + vin);
+                DebugLog.d(TAG, "Decoding VIN: " + vin);
 
                 URL url = new URL(API_BASE_URL + "/api/autocheck/decode");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();

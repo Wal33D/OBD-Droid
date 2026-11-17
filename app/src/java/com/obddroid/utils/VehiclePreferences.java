@@ -41,7 +41,7 @@ public class VehiclePreferences {
         }
         this.preferences = context.getApplicationContext()
                 .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        Log.d(TAG, "VehiclePreferences initialized");
+        DebugLog.d(TAG, "VehiclePreferences initialized");
     }
 
     /**
@@ -58,7 +58,7 @@ public class VehiclePreferences {
 
         String key = KEY_TANK_CAPACITY_PREFIX + sanitizeVIN(vin);
         if (!preferences.contains(key)) {
-            Log.d(TAG, "No tank capacity stored for VIN: " + maskVIN(vin));
+            DebugLog.d(TAG, "No tank capacity stored for VIN: " + maskVIN(vin));
             return null;
         }
 
@@ -68,7 +68,7 @@ public class VehiclePreferences {
             return null;
         }
 
-        Log.d(TAG, "Retrieved tank capacity for VIN " + maskVIN(vin) + ": " + capacity + " gal");
+        DebugLog.d(TAG, "Retrieved tank capacity for VIN " + maskVIN(vin) + ": " + capacity + " gal");
         return capacity;
     }
 
@@ -121,7 +121,7 @@ public class VehiclePreferences {
 
         String key = KEY_VOLUMETRIC_EFFICIENCY_PREFIX + sanitizeVIN(vin);
         if (!preferences.contains(key)) {
-            Log.d(TAG, "No VE calibration stored for VIN: " + maskVIN(vin) + " - using default " + DEFAULT_VE + "%");
+            DebugLog.d(TAG, "No VE calibration stored for VIN: " + maskVIN(vin) + " - using default " + DEFAULT_VE + "%");
             return null; // Caller should use DEFAULT_VE
         }
 
@@ -131,7 +131,7 @@ public class VehiclePreferences {
             return null;
         }
 
-        Log.d(TAG, "Retrieved VE for VIN " + maskVIN(vin) + ": " + ve + "%");
+        DebugLog.d(TAG, "Retrieved VE for VIN " + maskVIN(vin) + ": " + ve + "%");
         return ve;
     }
 
@@ -183,7 +183,7 @@ public class VehiclePreferences {
 
         String key = KEY_CALIBRATION_PROMPTED_PREFIX + sanitizeVIN(vin);
         boolean prompted = preferences.getBoolean(key, false);
-        Log.d(TAG, "Has prompted for calibration - VIN " + maskVIN(vin) + ": " + prompted);
+        DebugLog.d(TAG, "Has prompted for calibration - VIN " + maskVIN(vin) + ": " + prompted);
         return prompted;
     }
 
@@ -205,7 +205,7 @@ public class VehiclePreferences {
                 .commit();
 
         if (success) {
-            Log.d(TAG, "Marked calibration prompted for VIN " + maskVIN(vin));
+            DebugLog.d(TAG, "Marked calibration prompted for VIN " + maskVIN(vin));
         } else {
             Log.e(TAG, "Failed to mark calibration prompted for VIN " + maskVIN(vin));
         }
@@ -226,7 +226,7 @@ public class VehiclePreferences {
 
         String key = KEY_TANK_PROMPTED_PREFIX + sanitizeVIN(vin);
         boolean prompted = preferences.getBoolean(key, false);
-        Log.d(TAG, "Has prompted for tank size - VIN " + maskVIN(vin) + ": " + prompted);
+        DebugLog.d(TAG, "Has prompted for tank size - VIN " + maskVIN(vin) + ": " + prompted);
         return prompted;
     }
 
@@ -248,7 +248,7 @@ public class VehiclePreferences {
                 .commit();
 
         if (success) {
-            Log.d(TAG, "Marked tank size prompted for VIN " + maskVIN(vin));
+            DebugLog.d(TAG, "Marked tank size prompted for VIN " + maskVIN(vin));
         } else {
             Log.e(TAG, "Failed to mark tank size prompted for VIN " + maskVIN(vin));
         }
@@ -315,7 +315,7 @@ public class VehiclePreferences {
                 count++;
             }
         }
-        Log.d(TAG, "Known vehicle count: " + count);
+        DebugLog.d(TAG, "Known vehicle count: " + count);
         return count;
     }
 
@@ -345,7 +345,7 @@ public class VehiclePreferences {
         // VIN should only contain alphanumeric characters (no I, O, Q per ISO 3779)
         // We'll be lenient here and allow any alphanumeric for partial VINs
         if (!vin.matches("[A-HJ-NPR-Z0-9]{17}")) {
-            Log.d(TAG, "VIN contains invalid characters: " + vin);
+            DebugLog.d(TAG, "VIN contains invalid characters: " + vin);
             // Still allow it but log warning - some test VINs might not be perfect
             return true;
         }

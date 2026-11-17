@@ -329,7 +329,7 @@ public final class MonitorTestStage implements ScanStage {
                         return (int) Float.parseFloat(str);
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (NumberFormatException ignored) {
             }
             return 0;
         }

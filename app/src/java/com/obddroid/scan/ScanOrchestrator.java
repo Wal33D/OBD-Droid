@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.json.JSONException;
 
 /**
  * Foreground service that orchestrates a full vehicle scan.
@@ -309,7 +310,7 @@ public class ScanOrchestrator extends Service {
             this.durationMs = durationMs;
         }
 
-        JSONObject toJson() throws Exception {
+        JSONObject toJson() throws JSONException {
             JSONObject obj = new JSONObject();
             obj.put("stageId", stage.getId());
             obj.put("stageName", stage.getDisplayName());

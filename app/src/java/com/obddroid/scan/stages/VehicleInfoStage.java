@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.JSONException;
 
 /**
  * Stage: Capture vehicle information from Mode 09
@@ -123,7 +124,7 @@ public final class VehicleInfoStage implements ScanStage {
                         capturedCount++;
 
                         log.info("SCAN: Captured VID " + key + ": " + description + " = " + value);
-                    } catch (Exception e) {
+                    } catch (JSONException e) {
                         log.log(Level.WARNING, "SCAN: Error serializing VID " + entry.getKey(), e);
                         continue;
                     }

@@ -292,7 +292,7 @@ public class PidFormulaParser {
             int[] dummyBytes = {0, 0, 0, 0};
             evaluate(formula, dummyBytes);
             return true;
-        } catch (Exception e) {
+        } catch (FormulaException e) {
             Log.w(TAG, "Invalid formula: " + formula, e);
             return false;
         }

@@ -5,6 +5,7 @@ import com.obddroid.scan.ScanStage;
 import com.obddroid.scan.StageResult;
 
 import org.json.JSONObject;
+import org.json.JSONException;
 
 /**
  * Stage 1: Capture current discovery session state (adapter, ECUs, addresses)
@@ -52,7 +53,7 @@ public final class DiscoverySnapshotStage implements ScanStage {
 
             return StageResult.success(message, data);
 
-        } catch (Exception e) {
+        } catch (JSONException e) {
             return StageResult.failed("Failed to capture discovery data: " + e.getMessage(), e);
         }
     }

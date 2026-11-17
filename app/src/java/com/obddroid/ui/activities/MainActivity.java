@@ -2200,7 +2200,7 @@ public class MainActivity extends AppCompatActivity
         try
         {
             result = Integer.valueOf(prefs.getString(key, String.valueOf(defaultValue)));
-        } catch (Exception ex)
+        } catch (NumberFormatException | ClassCastException ex)
         {
             // log error message
             log.severe(String.format("Preference '%s'(%d): %s", key, result, ex.toString()));
@@ -2391,7 +2391,7 @@ public class MainActivity extends AppCompatActivity
         try
         {
             level = Level.parse(prefs.getString(LOG_MASTER, "INFO"));
-        } catch (Exception e)
+        } catch (IllegalArgumentException | ClassCastException e)
         {
             level = Level.INFO;
         }

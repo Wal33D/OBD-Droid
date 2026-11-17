@@ -4,6 +4,7 @@ package com.obddroid.ui.activities;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -642,7 +643,7 @@ public class SettingsActivity
 					{
 						startActivity(intent);
 					}
-					catch (Exception e)
+					catch (ActivityNotFoundException | SecurityException e)
 					{
 						log.log(Level.WARNING, "Failed to open OpenAI website", e);
 						SnackbarHelper.showError(getActivity(),

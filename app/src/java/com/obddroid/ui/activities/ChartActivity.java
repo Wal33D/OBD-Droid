@@ -298,8 +298,12 @@ public class ChartActivity extends AppCompatActivity {
         boolean dataChanged = false;
 
         for (ChartSeriesData seriesData : seriesDataList) {
+            Object raw = seriesData.pv.get(EcuDataPv.FID_VALUE);
+            if (raw == null) {
+                continue; // no value yet
+            }
             try {
-                float value = Float.parseFloat(seriesData.pv.get(EcuDataPv.FID_VALUE).toString());
+                float value = Float.parseFloat(raw.toString());
                 seriesData.entries.add(new Entry(currentTime, value));
 
                 // Limit to last 300 points (5 minutes at 1Hz)
@@ -308,7 +312,7 @@ public class ChartActivity extends AppCompatActivity {
                 }
 
                 dataChanged = true;
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
                 // Skip invalid values
             }
         }
@@ -373,7 +377,7 @@ public class ChartActivity extends AppCompatActivity {
         super.onStart();
         try {
             refreshTimer.schedule(updateTask, 0, 1000);
-        } catch (Exception e) {
+        } catch (IllegalStateException e) {
             // Exception ignored
         }
     }
